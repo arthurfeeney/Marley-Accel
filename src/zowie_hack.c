@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
   mouse_info_t mouse_info = find_mouse();
   if(!mouse_info.found) {
-    printf("Marley-Accel: No USB mouse was found.");
+    printf("Marley-Accel: No USB mouse was found.\n");
     return 0;
   }
 

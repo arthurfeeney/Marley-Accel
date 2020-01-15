@@ -27,6 +27,10 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
    * in mouse position, and writes to uinput.
    */
   int err;
+  
+  // find the overflow_lim for the provided accel settings
+  find_overflow_lim(as);
+
   int iterations = 3000;
   unsigned char mouse_interrupt_buf[6];
   int actual_interrupt_length;
@@ -112,18 +116,19 @@ void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
   /*
    * Cast to signed char so that values are pos/neg. If it stays insigned, 
    * all movements are positive.
+   * accel is defined in m_accel.h
    */
   if(buf[1] && buf[1] < 0xFF) {
-    emit_intr(fd, EV_REL, REL_X, as->accel((signed char) buf[1], as));
+    emit_intr(fd, EV_REL, REL_X, accel((signed char) buf[1], as));
   }
   else if(buf[1] == 0xFF) {
-    emit_intr(fd, EV_REL, REL_X, as->accel((signed char) buf[2], as));
+    emit_intr(fd, EV_REL, REL_X, accel((signed char) buf[2], as));
   }
   if(buf[3] && buf[3] < 0xFF) {
-    emit_intr(fd, EV_REL, REL_Y, as->accel((signed char) buf[3], as));
+    emit_intr(fd, EV_REL, REL_Y, accel((signed char) buf[3], as));
   }
   else if(buf[3] == 0xFF) {
-    emit_intr(fd, EV_REL, REL_Y, as->accel((signed char) buf[4], as));
+    emit_intr(fd, EV_REL, REL_Y, accel((signed char) buf[4], as));
   }
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }

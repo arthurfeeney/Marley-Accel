@@ -4,10 +4,11 @@ CFLAGS = -O2 -Wall -pedantic -lm
 USB = -lusb
 LIBUSB = `pkg-config libusb-1.0 --cflags --libs`
 MODULES = loading_util.o m_accel.o m_driver.o find_mouse.o
+OBJ = -o zowie_hack.o
 
 target: loading_util m_driver m_accel find_mouse
-	$(CC) $(CFLAGS) -o zowie_hack src/zowie_hack.c $(USB) $(MODULES) $(LIBUSB);
-	su -c "./zowie_hack"
+	$(CC) $(CFLAGS) $(OBJ) src/zowie_hack.c $(MODULES) $(USB) $(LIBUSB);
+	su -c "./zowie_hack.o"
 
 loading_util:
 	$(CC) $(CFLAGS) -o loading_util.o src/loading_util.c -c

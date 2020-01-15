@@ -1,8 +1,8 @@
 
 ## Marley Accel
 
-A small Linux user space mouse accel driver. It allows for acceleration that is frame rate independent and consistent across applications and games.  
-Supports Quake accel settings!
+A small Linux (user space) mouse accel driver. It allows for acceleration that is frame rate independent and consistent across applications and games.  
+A primary feature is that it supports the Quake accel settings!
 
 #### Requirements
 
