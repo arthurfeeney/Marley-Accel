@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <libusb-1.0/libusb.h>
 #include <linux/uinput.h>
 
-#include "loading_util.h" /* load device and uinput. mouse_dev_t */
 #include "m_driver.h"     /* accel_driver */
 #include "m_accel.h"      /* accel_settings_t and accel functions */
 #include "find_mouse.h"   /* find_mouse */
+#include "loading_util.h" /* load device and uinput. mouse_dev_t */
 
 void libusb_errmsg(const char *str, int ret) {
   /*
@@ -22,6 +23,34 @@ void libusb_errmsg(const char *str, int ret) {
 
 int main(int argc, char *argv[]) {
   int err;
+  char *config_path;
+
+  accel_settings_t as = {
+    .accel = quake_accel,
+    .overflow_lim = 10,
+    .base = 1,
+    .offset = 0,
+    .upper_bound = 8,
+    .accel_rate = 2,
+    .power = 2,
+    .game_sens = 1,
+    .carry_dx = 0,
+    .carry_dy = 0
+  };
+
+  if(argc == 2) {
+    config_path = argv[1];
+    err = load_config(&as, config_path);
+    if(err != 0) { printf("There was an error loading the config\n"); }
+  }
+
+  printf("base=%.4f\n", as.base);
+  printf("offset=%.4f\n", as.offset);
+  printf("upper_bound=%.4f\n", as.upper_bound);
+  printf("accel_rate=%.4f\n", as.accel_rate);
+  printf("power=%.4f\n", as.power);
+  printf("game_sens=%.4f\n", as.game_sens);
+  printf("overflow_lim=%d\n", as.overflow_lim);
 
   mouse_info_t mouse_info = find_mouse();
   if(!mouse_info.found) {
@@ -38,15 +67,6 @@ int main(int argc, char *argv[]) {
     .product_id = mouse_info.product_id,
     .endpoint_in = mouse_info.endpoint_in,
     .interface = mouse_info.interface
-  };
-
-  accel_settings_t as = {
-    .accel = quake_accel,
-    .base = 1,
-    .offset = 3,
-    .upper_bound = 5,
-    .accel_rate = 2,
-    .power = 2
   };
 
   err = dev_setup(&md);

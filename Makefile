@@ -8,7 +8,7 @@ OBJ = -o zowie_hack.o
 
 target: loading_util m_driver m_accel find_mouse
 	$(CC) $(CFLAGS) $(OBJ) src/zowie_hack.c $(MODULES) $(USB) $(LIBUSB);
-	su -c "./zowie_hack.o"
+	su -c "./zowie_hack.o config.txt"
 
 loading_util:
 	$(CC) $(CFLAGS) -o loading_util.o src/loading_util.c -c
@@ -21,7 +21,6 @@ m_accel:
 
 find_mouse:
 	$(CC) $(CFLAGS) -o find_mouse.o src/find_mouse.c -c
-
 
 clean:
 	rm *.o

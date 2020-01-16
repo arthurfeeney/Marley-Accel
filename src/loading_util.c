@@ -12,11 +12,52 @@
 #include <linux/uinput.h>
 
 #include "loading_util.h"
+#include "m_accel.h"
 
+int load_config(accel_settings_t *as, const char *config_path) {
+  /*
+   * load accel settings from configuration file.
+   */
+  FILE *config = fopen(config_path, "r");
+  char line[256]; // over allocating is fine here
+  while(fgets(line, sizeof(line), config) != NULL) {
+    char *eq_ptr = strchr(line, '=');
+    if(eq_ptr == NULL) {
+      return -1;
+    }
+    *eq_ptr = '\0';
+    if(strcmp(line, "base") == 0) {
+      as->base = strtof(eq_ptr + 1, NULL);
+    }
+    else if(strcmp(line, "offset") == 0) {
+      as->offset = strtof(eq_ptr + 1, NULL);
+    }
+    else if(strcmp(line, "upper_bound") == 0) {
+      as->upper_bound = strtof(eq_ptr + 1, NULL);
+    }
+    else if(strcmp(line, "accel_rate") == 0) {
+      as->accel_rate = strtof(eq_ptr + 1, NULL);
+    }
+    else if(strcmp(line, "power") == 0) {
+      as->power = strtof(eq_ptr + 1, NULL);
+    }
+    else if(strcmp(line, "game_sens") == 0) {
+      as->game_sens = strtof(eq_ptr + 1, NULL);
+    }
+    else if(strcmp(line, "overflow_lim") == 0) {
+      as->overflow_lim = strtof(eq_ptr + 1, NULL);
+    }
+    else {
+      return -1;
+    }
+  }
+  fclose(config);
+  return 0;
+}
 
 int dev_setup(mouse_dev_t *dev) {
   /*
-   * Connets to usb mouse device using libusb. Detaches the kernel driver
+   * Connects to usb mouse device using libusb. Detaches the kernel driver
    * and claims the device. 
    */
   int err = libusb_init(&dev->usb_ctx);
@@ -24,18 +65,18 @@ int dev_setup(mouse_dev_t *dev) {
 
   // find the device using the vendor and product ids. 
   // These can be found using the "usb-devices" command in the terminal.
-  // There are other options, but this one is simple. 
   dev->usb_handle = libusb_open_device_with_vid_pid(dev->usb_ctx,
                                                     dev->vendor_id,
                                                     dev->product_id);
   if(!dev->usb_handle) { 
-    printf("Marley-Accel: Device not found, try again with sudo.\n");
+    printf("Marley-Accel: Device not found, try running with sudo.\n");
     return -1;
   }
   // incase of error, driver may not be attached. So, 
-  // we make sure that it is attached. 
+  // we make sure that it is attached.
+  // If driver is already attached, this has no effect.
   libusb_attach_kernel_driver(dev->usb_handle, dev->interface);
- 
+
   if(libusb_kernel_driver_active(dev->usb_handle, dev->interface) == 1) {
     err = libusb_detach_kernel_driver(dev->usb_handle, dev->interface);
     if(err != 0) {
@@ -76,6 +117,9 @@ void dev_close(mouse_dev_t *dev) {
 }
 
 int create_input_device(uint16_t vendor_id, uint16_t product_id) {
+  /*
+   * creates uinput driver for the mouse with vendor_id and product_id.
+   */
   int fd, err;
   struct uinput_user_dev uidev;
   fd = open("/dev/uinput", O_WRONLY|O_NONBLOCK);

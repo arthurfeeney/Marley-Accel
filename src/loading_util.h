@@ -1,6 +1,9 @@
 #ifndef LOADING_UTIL_H
 #define LOADING_UTIL_H
 
+// defined in m_accel.h
+typedef struct accel_settings accel_settings_t;
+
 typedef struct mouse_dev {
   libusb_context *usb_ctx;
   libusb_device_handle *usb_handle;
@@ -11,6 +14,8 @@ typedef struct mouse_dev {
   uint16_t endpoint_in;
   uint16_t interface;
 } mouse_dev_t;
+
+int load_config(accel_settings_t *, const char *);
 
 /*
  * functions to manage the device with libusb

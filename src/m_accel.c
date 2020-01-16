@@ -1,85 +1,49 @@
-
 #include <math.h>
 #include <stdlib.h>
 #include <limits.h>
 
 #include "m_accel.h"
 
-void find_overflow_lim(accel_settings_t *as) {
+void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   /*
-   * This is unlikely to occur, but
-   * If the user suddenly moves their mouse quickly, it is possible
-   * that the value will overflow and the mouse will move in the wrong 
-   * direction. This finds the maximum shift that will result in this 
-   * overflow. This only needs to be run once during the driver setup.
+   * Apply mouse acceleration to dx and dy with user specified settings.
+   * dx and dy are updated in-place.
+   * Because values get trimmed when converted to char, we use carry_d* so values
+   * cut off can be added to the next call.
+   * This allows for greater precision overall.
    */
-  for(char change_in_pos = 0; change_in_pos <= SCHAR_MAX; ++change_in_pos) {
-    char accelerated_change = as->accel(change_in_pos, as);
-    // if accelerated change overflowed, then the prior change in position
-    // is the largest that won't overflow. 
-    if(accelerated_change < 0) {
-      as->overflow_lim = change_in_pos - 1;
-      return;
-    }
-    change_in_pos++;
-  }
-  // it never overflowed.
-  as->overflow_lim = SCHAR_MAX;
+  const float accelerated_sens = as->accel(*dx, *dy, as);
+  const float fdx = *dx * accelerated_sens;
+  const float fdy = *dy * accelerated_sens;
+  // Use carry_d* because of the truncation when converting to char
+  const signed char trim_dx = (signed char) (fdx + as->carry_dx);
+  const signed char trim_dy = (signed char) (fdy + as->carry_dy);
+  // Update deltas with their trimmed values
+  *dx = trim_dx;
+  *dy = trim_dy;
+  // update carry values so that they can be used next iteration
+  as->carry_dx = fdx - trim_dx;
+  as->carry_dy = fdy - trim_dy;
 }
 
-static char get_sign(const char change_in_pos) {
+float quake_accel(const signed char dx, const signed char dy,
+                  accel_settings_t *as) {
   /*
-   * returns 1 if change_in_pos is positive. -1 otherwise. 
+   * Computes mouse accel with quake-like settings.
    */
-  return change_in_pos > 0 ? 1 : -1;
+  // apply limit to mouse speed
+  const float clip_dx = fmin(dx, as->overflow_lim);
+  const float clip_dy = fmin(dy, as->overflow_lim);
+  // find velocity of the mouse
+  const float vel = sqrt((float) (clip_dx*clip_dx + clip_dy*clip_dy));
+  // clip change to lower bound of 0.
+  const float change = fmax(vel - as->offset, 0.0);
+  const float unbounded = as->game_sens + pow((as->accel_rate * change),
+                                              as->power-1);
+  // clip accel_sens to upper bound.
+  const float bounded = fmin(unbounded, as->upper_bound);
+  // account for in-game multiplier.
+  const float accel_sens = bounded / as->game_sens;
+  return as->base + accel_sens;
 }
 
-static char handle_overflow(const char change_in_pos) {
-  char sign = get_sign(change_in_pos);
-  if(sign == -1) {
-    return SCHAR_MIN;
-  }
-  else {
-    return SCHAR_MAX;
-  }
-}
-
-char accel(const char change_in_pos, accel_settings_t *as) {
-  /*
-   * Function to compute accel of change in pos. 
-   * Checks that change_in_pos  is small enough that it won't result
-   * in an overflow before applying the user-specified accel function.
-   */
-  if(abs(change_in_pos) > as->overflow_lim) {
-    return handle_overflow(change_in_pos);
-  }
-  else {
-    return as->accel(change_in_pos, as);
-  }
-
-}
-
-char pow_accel(const char change_in_pos, accel_settings_t *as) {
-  /*
-   * Accelerates by computing change_in_pos to some power.
-   * Even powers remove the sign, so we take abs and multiply by the
-   * sign after. This makes the sign remain unchanged 
-   */
-  const char sign = get_sign(change_in_pos);
-  return sign * (pow(abs(change_in_pos), as->power));
-}
-
-char quake_accel(const char change_in_pos, accel_settings_t *as) { 
-  // if vel - offset is negative, set start to zero. 
-  const char dist_from_c = abs(change_in_pos) - as->offset;
-  
-  // start is a float as (As)^P can be slightly better approximated by 
-  // rounding than by truncating
-  const float start = fmax(dist_from_c, 0);
-
-  // if unbounded accel is above upper_bound, clip it. 
-  const char unbounded = round(pow(as->accel_rate * start, as->power - 1));
-  const char acceleration = fmin(unbounded, as->upper_bound);
-
-  return change_in_pos * (as->base + acceleration);
-}

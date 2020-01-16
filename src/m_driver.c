@@ -29,7 +29,7 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
   int err;
   
   // find the overflow_lim for the provided accel settings
-  find_overflow_lim(as);
+  //find_overflow_lim(as);
 
   int iterations = 3000;
   unsigned char mouse_interrupt_buf[6];
@@ -42,7 +42,7 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
     if(err < 0 || actual_interrupt_length != 6) {
       return err;
     }
-    //intrmsg(mouse_interrupt_buf, actual_interrupt_length);
+    intrmsg(mouse_interrupt_buf, actual_interrupt_length);
     map_to_uinput(fd, mouse_interrupt_buf, as);
   }
   return 0;
@@ -78,6 +78,7 @@ void map_scroll_to_uinput(int fd, unsigned char *buf) {
 void map_key_to_uinput(int fd, unsigned char *buf) {
   /*
    * maps keycode to uinput.
+   * value = 1 is a press, 0 is a release
    */
   const unsigned char key_code = buf[0];
   if(key_code == 0) {
@@ -112,24 +113,39 @@ void map_key_to_uinput(int fd, unsigned char *buf) {
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
 
-void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
-  /*
-   * Cast to signed char so that values are pos/neg. If it stays insigned, 
-   * all movements are positive.
-   * accel is defined in m_accel.h
-   */
+static signed char delta_x(unsigned char *buf) {
   if(buf[1] && buf[1] < 0xFF) {
-    emit_intr(fd, EV_REL, REL_X, accel((signed char) buf[1], as));
+    return (signed char) buf[1];
   }
   else if(buf[1] == 0xFF) {
-    emit_intr(fd, EV_REL, REL_X, accel((signed char) buf[2], as));
+    return (signed char) buf[2];
   }
+  else {
+    return 0;
+  }
+}
+
+static signed char delta_y(unsigned char *buf) {
   if(buf[3] && buf[3] < 0xFF) {
-    emit_intr(fd, EV_REL, REL_Y, accel((signed char) buf[3], as));
+    return (signed char) buf[3];
   }
   else if(buf[3] == 0xFF) {
-    emit_intr(fd, EV_REL, REL_Y, accel((signed char) buf[4], as));
+    return (signed char) buf[4];
   }
+  else {
+    return 0;
+  }
+}
+
+void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
+  // retrieve the changes in mouse position. 
+  signed char dx = delta_x(buf);
+  signed char dy = delta_y(buf);
+  // dx and dy are updated in-place.
+  accelerate(&dx, &dy, as);
+  // write accelerated change to uinput
+  emit_intr(fd, EV_REL, REL_X, dx);
+  emit_intr(fd, EV_REL, REL_Y, dy);
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
 
