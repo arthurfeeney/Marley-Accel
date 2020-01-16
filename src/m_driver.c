@@ -1,20 +1,20 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <libusb-1.0/libusb.h>
-#include <linux/uinput.h>
 #include <linux/input-event-codes.h>
+#include <linux/uinput.h>
 
-#include "m_driver.h"
 #include "loading_util.h"
 #include "m_accel.h"
+#include "m_driver.h"
 
 static void intrmsg(const unsigned char *buf, int len) {
-  for(int i = 0; i < len; ++i) {
+  for (int i = 0; i < len; ++i) {
     printf("%X ", buf[i]);
   }
   printf("\n");
@@ -27,19 +27,18 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
    * in mouse position, and writes to uinput.
    */
   int err;
-  
+
   // find the overflow_lim for the provided accel settings
-  //find_overflow_lim(as);
+  // find_overflow_lim(as);
 
   int iterations = 3000;
   unsigned char mouse_interrupt_buf[6];
   int actual_interrupt_length;
-  while(iterations--) {
-    err = libusb_interrupt_transfer(dev->usb_handle, dev->endpoint_in,
-                                    mouse_interrupt_buf,
-                                    sizeof(mouse_interrupt_buf),
-                                    &actual_interrupt_length, 0);
-    if(err < 0 || actual_interrupt_length != 6) {
+  while (iterations--) {
+    err = libusb_interrupt_transfer(
+        dev->usb_handle, dev->endpoint_in, mouse_interrupt_buf,
+        sizeof(mouse_interrupt_buf), &actual_interrupt_length, 0);
+    if (err < 0 || actual_interrupt_length != 6) {
       return err;
     }
     intrmsg(mouse_interrupt_buf, actual_interrupt_length);
@@ -52,13 +51,11 @@ void emit_intr(int fd, int type, int code, int val) {
   /*
    * emit (write) interrupt to uinput at fd
    */
-  struct input_event ie = {
-    .type = type,
-    .code = code,
-    .value = val,
-    .time.tv_sec = 0,
-    .time.tv_usec = 0
-  };
+  struct input_event ie = {.type = type,
+                           .code = code,
+                           .value = val,
+                           .time.tv_sec = 0,
+                           .time.tv_usec = 0};
   write(fd, &ie, sizeof(ie));
 }
 
@@ -69,8 +66,8 @@ void map_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
 }
 
 void map_scroll_to_uinput(int fd, unsigned char *buf) {
-  if(buf[5] != 0) {
-    emit_intr(fd, EV_REL, REL_WHEEL, (signed char) buf[5]);
+  if (buf[5] != 0) {
+    emit_intr(fd, EV_REL, REL_WHEEL, (signed char)buf[5]);
     emit_intr(fd, EV_SYN, SYN_REPORT, 0);
   }
 }
@@ -81,32 +78,26 @@ void map_key_to_uinput(int fd, unsigned char *buf) {
    * value = 1 is a press, 0 is a release
    */
   const unsigned char key_code = buf[0];
-  if(key_code == 0) {
+  if (key_code == 0) {
     // release all keys
     emit_intr(fd, EV_KEY, BTN_LEFT, 0);
     emit_intr(fd, EV_KEY, BTN_RIGHT, 0);
     emit_intr(fd, EV_KEY, BTN_MIDDLE, 0);
     emit_intr(fd, EV_KEY, BTN_SIDE, 0);
     emit_intr(fd, EV_KEY, BTN_EXTRA, 0);
-  }
-  else if(key_code == 0x1) {
+  } else if (key_code == 0x1) {
     emit_intr(fd, EV_KEY, BTN_LEFT, 1);
-  }
-  else if(key_code == 0x2) {
+  } else if (key_code == 0x2) {
     emit_intr(fd, EV_KEY, BTN_RIGHT, 1);
-  }
-  else if(key_code == 0x3) {
+  } else if (key_code == 0x3) {
     emit_intr(fd, EV_KEY, BTN_LEFT, 1);
     emit_intr(fd, EV_KEY, BTN_RIGHT, 1);
-  }
-  else if(key_code == 0x4) {
+  } else if (key_code == 0x4) {
     emit_intr(fd, EV_KEY, BTN_MIDDLE, 1);
-  }
-  else if(key_code == 0x8) {
+  } else if (key_code == 0x8) {
     // side button closer to the back
     emit_intr(fd, EV_KEY, BTN_SIDE, 1);
-  }
-  else if(key_code == 0x10) {
+  } else if (key_code == 0x10) {
     // side button closer to the front.
     emit_intr(fd, EV_KEY, BTN_EXTRA, 1);
   }
@@ -114,31 +105,27 @@ void map_key_to_uinput(int fd, unsigned char *buf) {
 }
 
 static signed char delta_x(unsigned char *buf) {
-  if(buf[1] && buf[1] < 0xFF) {
-    return (signed char) buf[1];
-  }
-  else if(buf[1] == 0xFF) {
-    return (signed char) buf[2];
-  }
-  else {
+  if (buf[1] && buf[1] < 0xFF) {
+    return (signed char)buf[1];
+  } else if (buf[1] == 0xFF) {
+    return (signed char)buf[2];
+  } else {
     return 0;
   }
 }
 
 static signed char delta_y(unsigned char *buf) {
-  if(buf[3] && buf[3] < 0xFF) {
-    return (signed char) buf[3];
-  }
-  else if(buf[3] == 0xFF) {
-    return (signed char) buf[4];
-  }
-  else {
+  if (buf[3] && buf[3] < 0xFF) {
+    return (signed char)buf[3];
+  } else if (buf[3] == 0xFF) {
+    return (signed char)buf[4];
+  } else {
     return 0;
   }
 }
 
 void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
-  // retrieve the changes in mouse position. 
+  // retrieve the changes in mouse position.
   signed char dx = delta_x(buf);
   signed char dy = delta_y(buf);
   // dx and dy are updated in-place.
@@ -148,4 +135,3 @@ void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
   emit_intr(fd, EV_REL, REL_Y, dy);
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
-
