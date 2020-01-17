@@ -25,7 +25,11 @@ int main(int argc, char *argv[]) {
                          .power = 2,
                          .game_sens = 1,
                          .carry_dx = 0,
-                         .carry_dy = 0};
+                         .carry_dy = 0,
+                         .pre_scalar_x = 1,
+                         .pre_scalar_y = 1,
+                         .post_scalar_x = 1,
+                         .post_scalar_y = 1};
 
   if (argc == 2) {
     config_path = argv[1];

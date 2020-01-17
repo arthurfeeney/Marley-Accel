@@ -10,6 +10,10 @@ typedef struct accel_settings {
   float accel_rate;         /* Acceleration multiplier */
   float power;              /* Acceleration power */
   float game_sens;          /* In-game sensitivity (to be divided out) */
+  float pre_scalar_x;       /* Scale x before applying accel*/
+  float pre_scalar_y;       /* Scale y */
+  float post_scalar_x;      /* Scale x after applying accel */
+  float post_scalar_y;      /* Scale y */
   float carry_dx;           /* dx that was truncated when conerting to char */
   float carry_dy;           /* dy that was truncated */
 } accel_settings_t;
@@ -17,7 +21,6 @@ typedef struct accel_settings {
 void find_overflow_lim(accel_settings_t *);
 
 void accelerate(signed char *, signed char *, accel_settings_t *);
-// char pow_accel(char,  accel_settings_t *);
 float quake_accel(const signed char, const signed char, accel_settings_t *);
 
 #endif

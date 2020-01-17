@@ -5,10 +5,11 @@ USB = -lusb
 LIBUSB = `pkg-config libusb-1.0 --cflags --libs`
 MODULES = loading_util.o m_accel.o m_driver.o find_mouse.o
 OBJ = -o zowie_hack.o
+INSTALL_LOC = ./
 
 target: loading_util m_driver m_accel find_mouse errmsg
 	$(CC) $(CFLAGS) $(OBJ) src/zowie_hack.c $(MODULES) $(USB) $(LIBUSB);
-	su -c "./zowie_hack.o config.txt"
+	su -c "./zowie_hack.o config.txt";
 
 errmsg:
 	$(CC) $(CFLAGS) -o errmsg.o src/errmsg.c -c
@@ -27,3 +28,4 @@ find_mouse:
 
 clean:
 	rm *.o
+

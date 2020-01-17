@@ -145,6 +145,14 @@ static int assign_settings(const char *line, accel_settings_t *as) {
     as->game_sens = strtof(eq_ptr + 1, NULL);
   } else if (strcmp(line, "overflow_lim") == 0) {
     as->overflow_lim = strtof(eq_ptr + 1, NULL);
+  } else if (strcmp(line, "pre_scalar_x") == 0) {
+    as->pre_scalar_x = strtof(eq_ptr + 1, NULL);
+  } else if (strcmp(line, "pre_scalar_y") == 0) {
+    as->pre_scalar_y = strtof(eq_ptr + 1, NULL);
+  } else if (strcmp(line, "post_scalar_x") == 0) {
+    as->post_scalar_x = strtof(eq_ptr + 1, NULL);
+  } else if (strcmp(line, "post_scalar_y") == 0) {
+    as->post_scalar_y = strtof(eq_ptr + 1, NULL);
   } else {
     return -1;
   }

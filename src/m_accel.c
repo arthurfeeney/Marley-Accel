@@ -12,18 +12,28 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
    * values cut off can be added to the next call. This allows for greater
    * precision overall.
    */
-  const float accelerated_sens = as->accel(*dx, *dy, as);
+  const float pre_dx = *dx * as->pre_scalar_x;
+  const float pre_dy = *dx * as->pre_scalar_y;
+  // apply acceleration
+  const float accelerated_sens = as->accel(pre_dx, pre_dy, as);
   const float fdx = *dx * accelerated_sens;
   const float fdy = *dy * accelerated_sens;
-  // Use carry_d* because of the truncation when converting to char
-  const signed char trim_dx = (signed char)(fdx + as->carry_dx);
-  const signed char trim_dy = (signed char)(fdy + as->carry_dy);
+  // Apply post scalars.
+  const float post_dx = fdx * as->post_scalar_x;
+  const float post_dy = fdy * as->post_scalar_y;
+  // Add carry from previous iteration
+  const float accum_dx = post_dx + as->carry_dx;
+  const float accum_dy = post_dy + as->carry_dy;
+  // Compute trimmed values.
+  // Take floor before conversion to signed value prevents small jiggles.
+  const signed char trim_dx = (signed char)floor(accum_dx);
+  const signed char trim_dy = (signed char)floor(accum_dy);
   // Update deltas with their trimmed values
   *dx = trim_dx;
   *dy = trim_dy;
   // update carry values so that they can be used next iteration
-  as->carry_dx = fdx - trim_dx;
-  as->carry_dy = fdy - trim_dy;
+  as->carry_dx = accum_dx - trim_dx;
+  as->carry_dy = accum_dy - trim_dy;
 }
 
 float quake_accel(const signed char dx, const signed char dy,

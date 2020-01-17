@@ -9,11 +9,17 @@
 #include <linux/input-event-codes.h>
 #include <linux/uinput.h>
 
+#include "key_codes.h"
 #include "loading_util.h"
 #include "m_accel.h"
 #include "m_driver.h"
 
+static void release_keys(int fd);
 static void intrmsg(const unsigned char *buf, int len) {
+  /*
+   * only used for debugging to see that output of mouse interrupts
+   * in hexadecimal
+   */
   for (int i = 0; i < len; ++i) {
     printf("%X ", buf[i]);
   }
@@ -41,7 +47,7 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
     if (err < 0 || actual_interrupt_length != 6) {
       return err;
     }
-    // intrmsg(mouse_interrupt_buf, actual_interrupt_length);
+    intrmsg(mouse_interrupt_buf, actual_interrupt_length);
     map_to_uinput(fd, mouse_interrupt_buf, as);
   }
   return 0;
@@ -74,32 +80,20 @@ void map_scroll_to_uinput(int fd, unsigned char *buf) {
 
 void map_key_to_uinput(int fd, unsigned char *buf) {
   /*
-   * maps keycode to uinput.
    * value = 1 is a press, 0 is a release
+   * Some keycodes are for when multiple keys are held down.
+   * These can be seen by printing with intrmsg.
    */
   const unsigned char key_code = buf[0];
   if (key_code == 0) {
-    // release all keys
-    emit_intr(fd, EV_KEY, BTN_LEFT, 0);
-    emit_intr(fd, EV_KEY, BTN_RIGHT, 0);
-    emit_intr(fd, EV_KEY, BTN_MIDDLE, 0);
-    emit_intr(fd, EV_KEY, BTN_SIDE, 0);
-    emit_intr(fd, EV_KEY, BTN_EXTRA, 0);
-  } else if (key_code == 0x1) {
-    emit_intr(fd, EV_KEY, BTN_LEFT, 1);
-  } else if (key_code == 0x2) {
-    emit_intr(fd, EV_KEY, BTN_RIGHT, 1);
-  } else if (key_code == 0x3) {
-    emit_intr(fd, EV_KEY, BTN_LEFT, 1);
-    emit_intr(fd, EV_KEY, BTN_RIGHT, 1);
-  } else if (key_code == 0x4) {
-    emit_intr(fd, EV_KEY, BTN_MIDDLE, 1);
-  } else if (key_code == 0x8) {
-    // side button closer to the back
-    emit_intr(fd, EV_KEY, BTN_SIDE, 1);
-  } else if (key_code == 0x10) {
-    // side button closer to the front.
-    emit_intr(fd, EV_KEY, BTN_EXTRA, 1);
+    // no key is pressed, so realease them all.
+    release_keys(fd);
+  } else {
+    const int idx = buf[0];
+    const int len = key_code_map[idx][0];
+    for (int i = 1; i < len + 1; ++i) {
+      emit_intr(fd, EV_KEY, key_code_map[idx][i], 1);
+    }
   }
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
@@ -118,4 +112,15 @@ void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
   emit_intr(fd, EV_REL, REL_X, dx);
   emit_intr(fd, EV_REL, REL_Y, dy);
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
+}
+
+static void release_keys(int fd) {
+  /*
+   * writes that all mouse keys are unpressed
+   */
+  emit_intr(fd, EV_KEY, BTN_LEFT, 0);
+  emit_intr(fd, EV_KEY, BTN_RIGHT, 0);
+  emit_intr(fd, EV_KEY, BTN_MIDDLE, 0);
+  emit_intr(fd, EV_KEY, BTN_SIDE, 0);
+  emit_intr(fd, EV_KEY, BTN_EXTRA, 0);
 }
