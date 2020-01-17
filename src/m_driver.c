@@ -41,7 +41,7 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
     if (err < 0 || actual_interrupt_length != 6) {
       return err;
     }
-    intrmsg(mouse_interrupt_buf, actual_interrupt_length);
+    // intrmsg(mouse_interrupt_buf, actual_interrupt_length);
     map_to_uinput(fd, mouse_interrupt_buf, as);
   }
   return 0;
@@ -104,30 +104,14 @@ void map_key_to_uinput(int fd, unsigned char *buf) {
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
 
-static signed char delta_x(unsigned char *buf) {
-  if (buf[1] && buf[1] < 0xFF) {
-    return (signed char)buf[1];
-  } else if (buf[1] == 0xFF) {
-    return (signed char)buf[2];
-  } else {
-    return 0;
-  }
-}
-
-static signed char delta_y(unsigned char *buf) {
-  if (buf[3] && buf[3] < 0xFF) {
-    return (signed char)buf[3];
-  } else if (buf[3] == 0xFF) {
-    return (signed char)buf[4];
-  } else {
-    return 0;
-  }
-}
-
 void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
   // retrieve the changes in mouse position.
-  signed char dx = delta_x(buf);
-  signed char dy = delta_y(buf);
+  // convert to signed char (overflowed values become proper d* in negative
+  // direction.) buf[2] and buf[4] contain the signs for buf[1] and buf[3].
+  // They are not needed because converted to signed char gives the correct
+  // negation.
+  signed char dx = (signed char)buf[1];
+  signed char dy = (signed char)buf[3];
   // dx and dy are updated in-place.
   accelerate(&dx, &dy, as);
   // write accelerated change to uinput
