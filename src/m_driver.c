@@ -34,8 +34,10 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
    */
   int err;
 
-  // find the overflow_lim for the provided accel settings
-  // find_overflow_lim(as);
+#if PRECOMP
+  // precompute accel values
+  precomp(as);
+#endif
 
   int iterations = 3000;
   unsigned char mouse_interrupt_buf[6];
@@ -47,7 +49,7 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
     if (err < 0 || actual_interrupt_length != 6) {
       return err;
     }
-    intrmsg(mouse_interrupt_buf, actual_interrupt_length);
+    // intrmsg(mouse_interrupt_buf, actual_interrupt_length);
     map_to_uinput(fd, mouse_interrupt_buf, as);
   }
   return 0;

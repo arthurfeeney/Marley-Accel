@@ -5,9 +5,10 @@
  * key_code map. The key codes are at the index corressponding to their
  * mouse interrupts. The first value in each subarray is the number of
  * key codes contained in that subarray.
- * Subarrays have 5 elements because at most 5 keys can be held at a time
+ * Subarrays have 6 elements because at most 5 keys can be held at a time
+ * and the first agument is the length of the subarray
  */
-const int key_code_map[][5] = {
+const int key_code_map[][6] = {
     {0},                                             // 0x0, release keys
     {1, BTN_LEFT},                                   // 0x1
     {1, BTN_RIGHT},                                  // 0x2

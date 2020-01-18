@@ -6,8 +6,10 @@ A primary feature is that it supports the Quake accel settings!
 
 #### Requirements
 
-There are only two requirements:
+There are only a few requirements (most of which are installed on Linux?):
 
+* A C compiler
+* pkg-config
 * libusb-1.0
 * uinput (kernel module)
 

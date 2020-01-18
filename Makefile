@@ -1,11 +1,11 @@
 
 CC = gcc
-CFLAGS = -O2 -Wall -pedantic -lm
+PRECOMP = 0 # do not precompute accel values
+CFLAGS = -O2 -Wall -pedantic -lm -D PRECOMP=$(PRECOMP)
 USB = -lusb
 LIBUSB = `pkg-config libusb-1.0 --cflags --libs`
 MODULES = loading_util.o m_accel.o m_driver.o find_mouse.o
 OBJ = -o zowie_hack.o
-INSTALL_LOC = ./
 
 target: loading_util m_driver m_accel find_mouse errmsg
 	$(CC) $(CFLAGS) $(OBJ) src/zowie_hack.c $(MODULES) $(USB) $(LIBUSB);

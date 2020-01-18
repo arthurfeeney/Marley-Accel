@@ -1,8 +1,33 @@
 #include <limits.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "m_accel.h"
+
+#if PRECOMP
+static float precomp_accel_sens[UCHAR_MAX][UCHAR_MAX];
+static float lookup(const int dx, const int dy) {
+  // shift dx and dy over by SCHAR_MIN.
+  const int dx_idx = dx + -SCHAR_MIN;
+  const int dy_idx = dy + -SCHAR_MIN;
+  return precomp_accel_sens[dx_idx][dy_idx];
+}
+
+void precomp(accel_settings_t *as) {
+  /*
+   * Precompute accel sens for all possible combinations of dx and dy.
+   */
+  printf("Performing precomp");
+  for (int dx = SCHAR_MIN; dx < SCHAR_MAX; ++dx) {
+    for (int dy = SCHAR_MIN; dy < SCHAR_MAX; ++dy) {
+      const int dx_idx = dx + -SCHAR_MIN;
+      const int dy_idx = dy + -SCHAR_MIN;
+      precomp_accel_sens[dx_idx][dy_idx] = as->accel(dx, dy, as);
+    }
+  }
+}
+#endif
 
 void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   /*
@@ -15,7 +40,12 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   const float pre_dx = *dx * as->pre_scalar_x;
   const float pre_dy = *dx * as->pre_scalar_y;
   // apply acceleration
+#if PRECOMP
+  const float accelerated_sens = lookup(pre_dx, pre_dy);
+  printf("acc sens: %.4f", accelerated_sens);
+#else
   const float accelerated_sens = as->accel(pre_dx, pre_dy, as);
+#endif
   const float fdx = *dx * accelerated_sens;
   const float fdy = *dy * accelerated_sens;
   // Apply post scalars.
