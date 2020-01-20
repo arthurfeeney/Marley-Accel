@@ -13,6 +13,7 @@ typedef struct mouse_dev {
   uint16_t product_id;
   uint16_t endpoint_in;
   uint16_t interface;
+  uint16_t buf_size;
 } mouse_dev_t;
 
 int load_config(accel_settings_t *, const char *);

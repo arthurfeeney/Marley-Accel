@@ -15,6 +15,7 @@
 #include "m_driver.h"
 
 static void release_keys(int fd);
+#if DEBUG
 static void intrmsg(const unsigned char *buf, int len) {
   /*
    * only used for debugging to see that output of mouse interrupts
@@ -25,6 +26,7 @@ static void intrmsg(const unsigned char *buf, int len) {
   }
   printf("\n");
 }
+#endif
 
 int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
   /*
@@ -39,18 +41,22 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
   precomp(as);
 #endif
 
+  const int buf_size = dev->buf_size;
   int iterations = 3000;
-  unsigned char mouse_interrupt_buf[6];
+  unsigned char mouse_interrupt_buf[buf_size];
   int actual_interrupt_length;
   while (iterations--) {
     err = libusb_interrupt_transfer(
         dev->usb_handle, dev->endpoint_in, mouse_interrupt_buf,
         sizeof(mouse_interrupt_buf), &actual_interrupt_length, 0);
-    if (err < 0 || actual_interrupt_length != 6) {
+    if (err < 0 || actual_interrupt_length > buf_size) {
+      printf("length %d", actual_interrupt_length);
       return err;
     }
-    // intrmsg(mouse_interrupt_buf, actual_interrupt_length);
-    map_to_uinput(fd, mouse_interrupt_buf, as);
+#if DEBUG
+    intrmsg(mouse_interrupt_buf, actual_interrupt_length);
+#endif
+    map_to_uinput(fd, mouse_interrupt_buf, buf_size, as);
   }
   return 0;
 }
@@ -67,15 +73,17 @@ void emit_intr(int fd, int type, int code, int val) {
   write(fd, &ie, sizeof(ie));
 }
 
-void map_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
+void map_to_uinput(int fd, unsigned char *buf, int buf_size,
+                   accel_settings_t *as) {
   map_key_to_uinput(fd, buf);
-  map_scroll_to_uinput(fd, buf);
-  map_move_to_uinput(fd, buf, as);
+  map_scroll_to_uinput(fd, buf, buf_size);
+  map_move_to_uinput(fd, buf, buf_size, as);
 }
 
-void map_scroll_to_uinput(int fd, unsigned char *buf) {
-  if (buf[5] != 0) {
-    emit_intr(fd, EV_REL, REL_WHEEL, (signed char)buf[5]);
+void map_scroll_to_uinput(int fd, unsigned char *buf, int buf_size) {
+  const int scroll_idx = buf_size - 1; // always at the last index.
+  if (buf[scroll_idx] != 0) {
+    emit_intr(fd, EV_REL, REL_WHEEL, (signed char)buf[scroll_idx]);
     emit_intr(fd, EV_SYN, SYN_REPORT, 0);
   }
 }
@@ -100,22 +108,6 @@ void map_key_to_uinput(int fd, unsigned char *buf) {
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
 
-void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
-  // retrieve the changes in mouse position.
-  // convert to signed char (overflowed values become proper d* in negative
-  // direction.) buf[2] and buf[4] contain the signs for buf[1] and buf[3].
-  // They are not needed because converted to signed char gives the correct
-  // negation.
-  signed char dx = (signed char)buf[1];
-  signed char dy = (signed char)buf[3];
-  // dx and dy are updated in-place.
-  accelerate(&dx, &dy, as);
-  // write accelerated change to uinput
-  emit_intr(fd, EV_REL, REL_X, dx);
-  emit_intr(fd, EV_REL, REL_Y, dy);
-  emit_intr(fd, EV_SYN, SYN_REPORT, 0);
-}
-
 static void release_keys(int fd) {
   /*
    * writes that all mouse keys are unpressed
@@ -125,4 +117,21 @@ static void release_keys(int fd) {
   emit_intr(fd, EV_KEY, BTN_MIDDLE, 0);
   emit_intr(fd, EV_KEY, BTN_SIDE, 0);
   emit_intr(fd, EV_KEY, BTN_EXTRA, 0);
+}
+
+void map_move_to_uinput(int fd, unsigned char *buf, int buf_size,
+                        accel_settings_t *as) {
+  // retrieve the changes in mouse position.
+  // convert to signed char (overflowed values become proper d* in negative
+  // direction.) buf[2] and buf[4] contain the signs for buf[1] and buf[3].
+  // They are not needed because converted to signed char gives the correct
+  // negation.
+  signed char dx = (signed char)buf[1];
+  signed char dy = (signed char)buf_size == 6 ? buf[3] : buf[2];
+  // dx and dy are updated in-place.
+  accelerate(&dx, &dy, as);
+  // write accelerated change to uinput
+  emit_intr(fd, EV_REL, REL_X, dx);
+  emit_intr(fd, EV_REL, REL_Y, dy);
+  emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }

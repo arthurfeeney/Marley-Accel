@@ -29,6 +29,17 @@ void precomp(accel_settings_t *as) {
 }
 #endif
 
+float limit_delta(float delta) {
+  /*
+   * used to prevent overflow when converting to signed char.
+   */
+  const int sign = delta > 0 ? 1 : -1;
+  if (sign < 0) {
+    return fmax(SCHAR_MIN, delta);
+  }
+  return fmin(SCHAR_MAX, delta);
+}
+
 void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   /*
    * Apply mouse acceleration to dx and dy with user specified settings.
@@ -42,7 +53,6 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   // apply acceleration
 #if PRECOMP
   const float accelerated_sens = lookup(pre_dx, pre_dy);
-  printf("acc sens: %.4f", accelerated_sens);
 #else
   const float accelerated_sens = as->accel(pre_dx, pre_dy, as);
 #endif
@@ -52,8 +62,8 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   const float post_dx = fdx * as->post_scalar_x;
   const float post_dy = fdy * as->post_scalar_y;
   // Add carry from previous iteration
-  const float accum_dx = post_dx + as->carry_dx;
-  const float accum_dy = post_dy + as->carry_dy;
+  const float accum_dx = limit_delta(post_dx + as->carry_dx);
+  const float accum_dy = limit_delta(post_dy + as->carry_dy);
   // Compute trimmed values.
   // Take floor before conversion to signed value prevents small jiggles.
   const signed char trim_dx = (signed char)floor(accum_dx);
@@ -72,7 +82,7 @@ float quake_accel(const signed char dx, const signed char dy,
   const float clip_dx = fmin(dx, as->overflow_lim);
   const float clip_dy = fmin(dy, as->overflow_lim);
   // find velocity of the mouse
-  const float vel = sqrt((float)(clip_dx * clip_dx + clip_dy * clip_dy));
+  const float vel = sqrt(clip_dx * clip_dx + clip_dy * clip_dy);
   // clip change to lower bound of 0.
   const float change = fmax(vel - as->offset, 0.0);
   const float unbounded =

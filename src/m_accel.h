@@ -18,8 +18,9 @@ typedef struct accel_settings {
   float carry_dy;           /* dy that was truncated */
 } accel_settings_t;
 
+#if PRECOMP
 void precomp(accel_settings_t *);
-void find_overflow_lim(accel_settings_t *);
+#endif
 
 void accelerate(signed char *, signed char *, accel_settings_t *);
 float quake_accel(const signed char, const signed char, accel_settings_t *);

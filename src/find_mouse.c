@@ -31,7 +31,8 @@ mouse_info_t find_mouse(void) {
                                    .product_id = dev->descriptor.idProduct,
                                    .endpoint_in =
                                        uid->endpoint->bEndpointAddress,
-                                   .interface = uid->iInterface};
+                                   .interface = uid->iInterface,
+                                   .buf_size = uid->endpoint->wMaxPacketSize};
         return info;
       }
     }

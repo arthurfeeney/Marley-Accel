@@ -7,6 +7,7 @@ typedef struct mouse_info {
   uint16_t product_id;
   uint16_t endpoint_in;
   uint16_t interface;
+  uint16_t buf_size;
 } mouse_info_t;
 
 mouse_info_t find_mouse(void);
