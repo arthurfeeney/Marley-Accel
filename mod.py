@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import tkinter as tk
 
 
 def main():
@@ -10,6 +11,38 @@ def main():
     sens = np.array([quake_accel(vel, settings) for vel in vels])
     plt.plot(vels, sens)
     plt.show()
+
+    window = tk.Tk()
+    window.title('Marley Accel Setup')
+    window.geometry('800x600')
+
+    heading = tk.Label(window, text='Settings')
+    heading.grid(row=0, column=1)
+
+    field_names = [
+        'Base Sens', 'Accel', 'Offset', 'Upper Bound', 'Power', 'Game Sens',
+        'Pre-Scalar-X', 'Pre-Scalar-Y', 'Post-Scalar-X', 'Post-Scalar-Y'
+    ]
+
+    for idx, field_name in enumerate(field_names):
+        base = tk.Label(window, text=field_name)
+        base.grid(row=idx + 1, column=0)
+        base_entry = tk.Entry(window)
+        base_entry.grid(row=idx + 1, column=1, ipadx='100')
+
+    submit = tk.Button(window,
+                       text='Apply',
+                       fg='Black',
+                       bg='Red',
+                       command=submit_fields)
+    submit.grid(row=len(field_names) + 1, column=1)
+    print(window)
+
+    window.mainloop()
+
+
+def submit_fields():
+    print('hi')
 
 
 class AccelSettings:

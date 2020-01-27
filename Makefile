@@ -10,7 +10,10 @@ OBJ = -o marley_accel.o
 
 target: errmsg loading_util m_driver m_accel find_mouse
 	$(CC) $(CFLAGS) $(PREPROC) $(OBJ) src/marley_accel.c -lm $(MODULES) $(USB);
-	su -c "./marley_accel.o config.txt";
+
+run: target
+	su -c "./marley_accel.o config.txt"
+
 
 errmsg:
 	$(CC) $(CFLAGS) -o errmsg.o src/errmsg.c -c

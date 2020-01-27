@@ -14,7 +14,10 @@
 #include "m_accel.h"
 #include "m_driver.h"
 
-static void release_keys(int fd);
+#define DEBUG 0
+
+static void press_keys(int, int *);
+
 #if DEBUG
 static void intrmsg(const unsigned char *buf, int len) {
   /*
@@ -88,44 +91,58 @@ void map_scroll_to_uinput(int fd, unsigned char *buf, int buf_size) {
   }
 }
 
+static void assign_pressed(const int *const key_codes, int *pressed) {
+  const int len = key_codes[0];
+  for (int i = 1; i < len + 1; ++i) {
+    if (key_codes[i] == BTN_LEFT)
+      pressed[0] = 1;
+    else if (key_codes[i] == BTN_RIGHT)
+      pressed[1] = 1;
+    else if (key_codes[i] == BTN_MIDDLE)
+      pressed[2] = 1;
+    else if (key_codes[i] == BTN_SIDE)
+      pressed[3] = 1;
+    else if (key_codes[i] == BTN_EXTRA)
+      pressed[4] = 1;
+  }
+}
+
 void map_key_to_uinput(int fd, unsigned char *buf) {
   /*
    * value = 1 is a press, 0 is a release
    * Some keycodes are for when multiple keys are held down.
    * These can be seen by printing with intrmsg.
    */
-  const unsigned char key_code = buf[0];
-  if (key_code == 0) {
-    // no key is pressed, so realease them all.
-    release_keys(fd);
-  } else {
-    const int idx = buf[0];
-    const int len = key_code_map[idx][0];
-    for (int i = 1; i < len + 1; ++i) {
-      emit_intr(fd, EV_KEY, key_code_map[idx][i], 1);
-    }
-  }
+  const int idx = buf[0];
+  int pressed[5] = {0, 0, 0, 0, 0};
+  // for (int i = 1; i < len + 1; ++i) {
+  //  emit_intr(fd, EV_KEY, key_code_map[idx][i], 1);
+  //}
+  assign_pressed(key_code_map[idx], pressed);
+  press_keys(fd, pressed);
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
 
-static void release_keys(int fd) {
+static void press_keys(int fd, int *pressed) {
   /*
-   * writes that all mouse keys are unpressed
+   * emits interrupt for all mouse keys. Releases any keys
+   * that are not held down.
    */
-  emit_intr(fd, EV_KEY, BTN_LEFT, 0);
-  emit_intr(fd, EV_KEY, BTN_RIGHT, 0);
-  emit_intr(fd, EV_KEY, BTN_MIDDLE, 0);
-  emit_intr(fd, EV_KEY, BTN_SIDE, 0);
-  emit_intr(fd, EV_KEY, BTN_EXTRA, 0);
+  emit_intr(fd, EV_KEY, BTN_LEFT, pressed[0]);
+  emit_intr(fd, EV_KEY, BTN_RIGHT, pressed[1]);
+  emit_intr(fd, EV_KEY, BTN_MIDDLE, pressed[2]);
+  emit_intr(fd, EV_KEY, BTN_SIDE, pressed[3]);
+  emit_intr(fd, EV_KEY, BTN_EXTRA, pressed[4]);
 }
 
 void map_move_to_uinput(int fd, unsigned char *buf, int buf_size,
                         accel_settings_t *as) {
   // retrieve the changes in mouse position.
   // convert to signed char (overflowed values become proper d* in negative
-  // direction.) buf[2] and buf[4] contain the signs for buf[1] and buf[3].
-  // They are not needed because converted to signed char gives the correct
-  // negation.
+  // direction.)
+  // When the sent packet is six bytes, buf[2] and buf[4] contain
+  // the signs for buf[1] and buf[3]. They are not needed because
+  // converted to signed char gives the correct negation.
   signed char dx = (signed char)buf[1];
   signed char dy = (signed char)buf_size == 6 ? buf[3] : buf[2];
   // dx and dy are updated in-place.
