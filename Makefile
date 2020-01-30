@@ -12,7 +12,7 @@ target: errmsg loading_util m_driver m_accel find_mouse
 	$(CC) $(CFLAGS) $(PREPROC) $(OBJ) src/marley_accel.c -lm $(MODULES) $(USB);
 
 run: target
-	su -c "./marley_accel.o config.txt"
+	su -c "./marley_accel.o $(CONFIG_FILE_PATH)"
 
 
 errmsg:

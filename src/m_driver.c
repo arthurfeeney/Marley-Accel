@@ -45,7 +45,7 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
 #endif
 
   const int buf_size = dev->buf_size;
-  int iterations = 3000;
+  int iterations = 300;
   unsigned char mouse_interrupt_buf[buf_size];
   int actual_interrupt_length;
   while (iterations--) {
