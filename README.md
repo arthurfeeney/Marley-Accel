@@ -22,7 +22,7 @@ In order to use the (optional) setup GUI you also need:
 
 #### Usage
 
-This is still a work in progress. It is very simple to run, but there are some annoying requirements at the moment. The main one being that you should have a config file that adheres strictly to the form of the provided example, example_config/ex.cfg. Then, when you want to use the driver, you can compile and run it like this
+This is still a work in progress. It is very simple to run, but there are some annoying requirements at the moment. The main one being that you should have a config file that adheres strictly to the form of the provided example, configs/ex.cfg. Then, when you want to use the driver, you can compile and run it like this
 
 ~~~~
 make run CONFIG_FILE_PATH=configs/ex.cfg
