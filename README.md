@@ -12,14 +12,6 @@ There are only a few simple requirements for the driver:
 * libusb-1.0
 * uinput (kernel module)
 
-In order to use the (optional) setup GUI you also need:
-
-* Python3
-* matplotlib
-* numpy
-* tkinter
-* argparse
-
 #### Usage
 
 This is still a work in progress. It is very simple to run, but there are some annoying requirements at the moment. The main one being that you should have a config file that adheres strictly to the form of the provided example, configs/ex.cfg. Then, when you want to use the driver, you can compile and run it like this
