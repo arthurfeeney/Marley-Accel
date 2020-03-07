@@ -1,5 +1,5 @@
 
-CC = clang
+CC = gcc 
 PRECOMP = 0 # 1 to precompute accel values 
 DEBUG = 0	# 1 to enter the debug mode
 PREPROC = -D PRECOMP=$(PRECOMP) -D DEBUG=$(DEBUG)

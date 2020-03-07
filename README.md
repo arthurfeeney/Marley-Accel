@@ -3,6 +3,12 @@
 
 A small Linux user space mouse accel driver that supports the quake live accel settings. It allows for acceleration that is frame rate independent and consistent across applications and games. It additionally allows you to save and use multiple configurations and provides a minimal GUI that plots your current settings to assist coniguration. 
 
+#### Contributing
+
+This was a short-term project and I only have two mice. If you find an issue,
+or want to add some feature, feel free to let me know or make a pull 
+request! 
+
 #### Requirements
 
 There are only a few simple requirements for the driver:
