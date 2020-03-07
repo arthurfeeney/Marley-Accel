@@ -65,9 +65,9 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   const float accum_dx = limit_delta(post_dx + as->carry_dx);
   const float accum_dy = limit_delta(post_dy + as->carry_dy);
   // Compute trimmed values.
-  // Take floor before conversion to signed value prevents small jiggles.
-  const signed char trim_dx = (signed char)floor(accum_dx);
-  const signed char trim_dy = (signed char)floor(accum_dy);
+  // round before conversion to signed value prevents small jiggles.
+  const signed char trim_dx = (signed char)round(accum_dx);
+  const signed char trim_dy = (signed char)round(accum_dy);
   // Update deltas with their trimmed values
   *dx = trim_dx;
   *dy = trim_dy;

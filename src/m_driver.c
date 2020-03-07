@@ -116,9 +116,6 @@ void map_key_to_uinput(int fd, unsigned char *buf) {
    */
   const int idx = buf[0];
   int pressed[5] = {0, 0, 0, 0, 0};
-  // for (int i = 1; i < len + 1; ++i) {
-  //  emit_intr(fd, EV_KEY, key_code_map[idx][i], 1);
-  //}
   assign_pressed(key_code_map[idx], pressed);
   press_keys(fd, pressed);
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
