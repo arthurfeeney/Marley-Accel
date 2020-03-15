@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
 
   if (argc == 2) {
     config_path = argv[1];
+    printf("Loading config at %s\n", config_path);
     err = load_config(&as, config_path);
     if (err != 0) {
       errmsg("There was an error loading the config\n", err);

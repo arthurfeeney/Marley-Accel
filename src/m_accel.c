@@ -17,6 +17,7 @@ static float lookup(const int dx, const int dy) {
 void precomp(accel_settings_t *as) {
   /*
    * Precompute accel sens for all possible combinations of dx and dy.
+   * There are only 256^2 possible combinations, so this is feasible.
    */
   printf("Performing precomp");
   for (int dx = SCHAR_MIN; dx < SCHAR_MAX; ++dx) {
@@ -64,10 +65,9 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   // Add carry from previous iteration
   const float accum_dx = limit_delta(post_dx + as->carry_dx);
   const float accum_dy = limit_delta(post_dy + as->carry_dy);
-  // Compute trimmed values.
-  // round before conversion to signed value prevents small jiggles.
-  const signed char trim_dx = (signed char)round(accum_dx);
-  const signed char trim_dy = (signed char)round(accum_dy);
+  // truncate before conversion to signed value prevents small jiggles
+  const signed char trim_dx = (signed char)truncf(accum_dx);
+  const signed char trim_dy = (signed char)truncf(accum_dy);
   // Update deltas with their trimmed values
   *dx = trim_dx;
   *dy = trim_dy;

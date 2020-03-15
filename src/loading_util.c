@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -15,6 +16,10 @@
 #include "loading_util.h"
 #include "m_accel.h"
 
+#define CONFIG_LINE_LENGTH 1024
+
+static void remove_spaces(char *);
+static void remove_comments(char *);
 static int assign_settings(const char *, accel_settings_t *);
 static void create_bindings(int);
 static int initialize_device(int, uint16_t, uint16_t);
@@ -24,8 +29,10 @@ int load_config(accel_settings_t *as, const char *config_path) {
    * load accel settings from configuration file.
    */
   FILE *config = fopen(config_path, "r");
-  char line[256]; // over allocating is fine here
+  char line[CONFIG_LINE_LENGTH]; // over allocating memory is fine here
   while (fgets(line, sizeof(line), config) != NULL) {
+    remove_spaces(line);
+    remove_comments(line);
     int err = assign_settings(line, as);
     if (err) {
       return err;
@@ -123,6 +130,35 @@ int create_input_device(uint16_t vendor_id, uint16_t product_id) {
 void close_input_device(int fd) {
   ioctl(fd, UI_DEV_DESTROY);
   close(fd);
+}
+
+static void remove_spaces(char *line) {
+  /*
+   * Remove all spaces from the line. config files are small enough that this
+   * can be done in-place by shifting text to cover spaces.
+   */
+  for (int idx = 0; idx < CONFIG_LINE_LENGTH && line[idx] != '\0'; ++idx) {
+    // shift text over to remove space.
+    if (isspace(line[idx])) {
+      for (int shift = idx; shift < CONFIG_LINE_LENGTH && line[shift] != '\0';
+           ++shift) {
+        line[shift] = line[shift + 1];
+      }
+    }
+  }
+}
+
+static void remove_comments(char *line) {
+  /*
+   * Remove comments from a line in a config file
+   * Replace '#' with end of string.
+   * Effectively ignoring everything after it, allowing for single line comments
+   */
+  for (int idx = 0; idx < CONFIG_LINE_LENGTH; ++idx) {
+    if (line[idx] == '#') {
+      line[idx] = '\0';
+    }
+  }
 }
 
 static int assign_settings(const char *line, accel_settings_t *as) {
