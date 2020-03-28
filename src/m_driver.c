@@ -24,6 +24,7 @@ static bool run_mouse_driver = true;
 
 static void press_keys(int, int *);
 
+#if defined(DEBUG) && DEBUG + 0
 static void intrmsg(const unsigned char *buf, int len) {
   /*
    * only used for debugging to see that output of mouse interrupts
@@ -34,6 +35,7 @@ static void intrmsg(const unsigned char *buf, int len) {
   }
   printf("\n");
 }
+#endif
 
 void interrupt_handler(int sig) {
   /*
@@ -66,7 +68,7 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
         dev->usb_handle, dev->endpoint_in, mouse_interrupt_buf,
         sizeof(mouse_interrupt_buf), &actual_interrupt_length, 0);
     if (err < 0 || actual_interrupt_length > buf_size) {
-      printf("length %d", actual_interrupt_length);
+      printf("interrupt length %d\n", actual_interrupt_length);
       return err;
     }
 #if defined(DEBUG) && DEBUG + 0

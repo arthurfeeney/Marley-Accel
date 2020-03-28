@@ -19,11 +19,15 @@ all: $(TARGET)
 $(TARGET) : buildrepo $(OBJS)
 	$(CC) $(OBJS) $(USB) $(LDFLAGS) -o $@ -lm
 
+
+run: all
+	su -c "./marley_accel $(CONFIG_FILE_PATH)"
+
 $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@ -lm
 
 clean:
-	$(RM) $(OBJS)
+	$(RM) $(TARGET)
 	@rm -rf $(OBJDIR)
 
 distclean: clean

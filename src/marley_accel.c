@@ -7,13 +7,11 @@
 #include <libusb-1.0/libusb.h>
 #include <linux/uinput.h>
 
-#include "errmsg.c"
+#include "errmsg.h"
 #include "find_mouse.h"   /* find_mouse */
 #include "loading_util.h" /* load device and uinput. mouse_dev_t */
 #include "m_accel.h"      /* accel_settings_t and accel functions */
 #include "m_driver.h"     /* accel_driver */
-
-void interrupt_handler(int);
 
 int main(int argc, char *argv[]) {
   int err;
