@@ -1,5 +1,6 @@
-#include <limits.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,11 +16,14 @@
 #include "m_accel.h"
 #include "m_driver.h"
 
-#define DEBUG 0
+/*
+ * Boolean flag to run the mouse driver. When it is switched to false, the
+ * driver will stop. The original kernel mouse driver should reattach.
+ */
+static bool run_mouse_driver = true;
 
 static void press_keys(int, int *);
 
-#if DEBUG
 static void intrmsg(const unsigned char *buf, int len) {
   /*
    * only used for debugging to see that output of mouse interrupts
@@ -30,7 +34,13 @@ static void intrmsg(const unsigned char *buf, int len) {
   }
   printf("\n");
 }
-#endif
+
+void interrupt_handler(int sig) {
+  /*
+   * On interrupt, turn off the mouse driver.
+   */
+  run_mouse_driver = false;
+}
 
 int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
   /*
@@ -40,16 +50,18 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
    */
   int err;
 
-#if PRECOMP
+#if defined(PRECOMP) && PRECOMP + 0
   // precompute accel values
   precomp(as);
 #endif
 
+  struct sigaction act = {.sa_handler = interrupt_handler};
+  sigaction(SIGINT, &act, NULL);
+
   const int buf_size = dev->buf_size;
-  int iterations = INT_MAX;
   unsigned char mouse_interrupt_buf[buf_size];
   int actual_interrupt_length;
-  while (iterations--) {
+  while (run_mouse_driver) {
     err = libusb_interrupt_transfer(
         dev->usb_handle, dev->endpoint_in, mouse_interrupt_buf,
         sizeof(mouse_interrupt_buf), &actual_interrupt_length, 0);
@@ -57,10 +69,10 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
       printf("length %d", actual_interrupt_length);
       return err;
     }
-#if DEBUG
+#if defined(DEBUG) && DEBUG + 0
     intrmsg(mouse_interrupt_buf, actual_interrupt_length);
 #endif
-    map_to_uinput(fd, mouse_interrupt_buf, buf_size, as);
+    map_to_uinput(fd, mouse_interrupt_buf, actual_interrupt_length, as);
   }
   return 0;
 }
@@ -138,11 +150,9 @@ void map_move_to_uinput(int fd, unsigned char *buf, int buf_size,
   // retrieve the changes in mouse position.
   // convert to signed char (overflowed values become proper d* in negative
   // direction.)
-  // When the sent packet is six bytes, buf[2] and buf[4] contain
-  // the signs for buf[1] and buf[3]. They are not needed because
-  // converted to signed char gives the correct negation.
   signed char dx = (signed char)buf[1];
   signed char dy = (signed char)buf_size == 6 ? buf[3] : buf[2];
+
   // dx and dy are updated in-place.
   accelerate(&dx, &dy, as);
   // write accelerated change to uinput

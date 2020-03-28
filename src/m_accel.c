@@ -5,7 +5,7 @@
 
 #include "m_accel.h"
 
-#if PRECOMP
+#if defined(PRECOMP) && PRECOMP + 0
 static float precomp_accel_sens[UCHAR_MAX][UCHAR_MAX];
 static float lookup(const int dx, const int dy) {
   // shift dx and dy over by SCHAR_MIN.
@@ -52,7 +52,7 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   const float pre_dx = *dx * as->pre_scalar_x;
   const float pre_dy = *dx * as->pre_scalar_y;
   // apply acceleration
-#if PRECOMP
+#if defined(PRECOMP) && PRECOMP + 0
   const float accelerated_sens = lookup(pre_dx, pre_dy);
 #else
   const float accelerated_sens = as->accel(pre_dx, pre_dy, as);

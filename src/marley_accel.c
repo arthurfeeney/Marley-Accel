@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,8 @@
 #include "loading_util.h" /* load device and uinput. mouse_dev_t */
 #include "m_accel.h"      /* accel_settings_t and accel functions */
 #include "m_driver.h"     /* accel_driver */
+
+void interrupt_handler(int);
 
 int main(int argc, char *argv[]) {
   int err;
@@ -40,19 +43,23 @@ int main(int argc, char *argv[]) {
       errmsg("There was an error loading the config\n", err);
       return err;
     }
+  } else {
+    printf("You did not pass a configuration file\n");
+    return 0;
   }
 
-  printf("overflow_lim=%d\n", as.overflow_lim);
-  printf("base=%.4f\n", as.base);
-  printf("offset=%.4f\n", as.offset);
-  printf("upper_bound=%.4f\n", as.upper_bound);
-  printf("accel_rate=%.4f\n", as.accel_rate);
-  printf("power=%.4f\n", as.power);
-  printf("game_sens=%.4f\n", as.game_sens);
-  printf("pre_scalar_x=%.4f\n", as.pre_scalar_x);
-  printf("pre_scalar_y=%.4f\n", as.pre_scalar_y);
-  printf("post_scalar_x=%.4f\n", as.post_scalar_x);
-  printf("post_scalar_y=%.4f\n", as.post_scalar_y);
+  printf("Accel Config Settings:\n");
+  printf(" > overflow_lim=%d\n", as.overflow_lim);
+  printf(" > base=%.4f\n", as.base);
+  printf(" > offset=%.4f\n", as.offset);
+  printf(" > upper_bound=%.4f\n", as.upper_bound);
+  printf(" > accel_rate=%.4f\n", as.accel_rate);
+  printf(" > power=%.4f\n", as.power);
+  printf(" > game_sens=%.4f\n", as.game_sens);
+  printf(" > pre_scalar_x=%.4f\n", as.pre_scalar_x);
+  printf(" > pre_scalar_y=%.4f\n", as.pre_scalar_y);
+  printf(" > post_scalar_x=%.4f\n", as.post_scalar_x);
+  printf(" > post_scalar_y=%.4f\n", as.post_scalar_y);
 
   mouse_info_t mouse_info = find_mouse();
   if (!mouse_info.found) {
@@ -79,7 +86,10 @@ int main(int argc, char *argv[]) {
 
   int fd = create_input_device(md.vendor_id, md.product_id);
 
+  printf("\nStop with Ctrl-c.\n");
+
   err = accel_driver(fd, &md, &as);
+
   if (err) {
     libusb_errmsg("Error during device execution", err);
     dev_close(&md);
@@ -89,6 +99,8 @@ int main(int argc, char *argv[]) {
   dev_close(&md);
   if (fd)
     close_input_device(fd);
+
+  printf("Reattaching kernel driver.\n");
 
   return 0;
 }

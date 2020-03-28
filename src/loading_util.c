@@ -18,6 +18,7 @@
 
 #define CONFIG_LINE_LENGTH 1024
 
+static void make_lowercase(char *);
 static void remove_spaces(char *);
 static void remove_comments(char *);
 static int assign_settings(const char *, accel_settings_t *);
@@ -31,6 +32,7 @@ int load_config(accel_settings_t *as, const char *config_path) {
   FILE *config = fopen(config_path, "r");
   char line[CONFIG_LINE_LENGTH]; // over allocating memory is fine here
   while (fgets(line, sizeof(line), config) != NULL) {
+    make_lowercase(line);
     remove_spaces(line);
     remove_comments(line);
     int err = assign_settings(line, as);
@@ -100,7 +102,7 @@ void dev_close(mouse_dev_t *dev) {
   }
   if (dev->usb_ctx)
     libusb_exit(dev->usb_ctx);
-  printf("Marley-Accel: Device closed\n");
+  printf("\nMarley-Accel: Device closed\n");
 }
 
 int create_input_device(uint16_t vendor_id, uint16_t product_id) {
@@ -130,6 +132,12 @@ int create_input_device(uint16_t vendor_id, uint16_t product_id) {
 void close_input_device(int fd) {
   ioctl(fd, UI_DEV_DESTROY);
   close(fd);
+}
+
+static void make_lowercase(char *line) {
+  for (int idx = 0; idx < CONFIG_LINE_LENGTH && line[idx] != '\0'; ++idx) {
+    line[idx] = tolower(line[idx]);
+  }
 }
 
 static void remove_spaces(char *line) {
