@@ -1,35 +1,40 @@
 
-CC = gcc 
-PRECOMP = 0 # 1 to precompute accel values 
-DEBUG = 0	# 1 to enter the debug mode
-PREPROC = -D PRECOMP=$(PRECOMP) -D DEBUG=$(DEBUG)
-CFLAGS = -std=gnu11 -g -O2 -Wall -pedantic 
+TARGET	= marley_accel
+
+SRCDIR  = src
+OBJDIR  = obj
+
+SRCS    := $(shell find $(SRCDIR) -name '*.c')
+SRCDIRS := $(shell find . -name '*.c' -exec dirname {} \; | uniq)
+OBJS    := $(patsubst %.c,$(OBJDIR)/%.o,$(SRCS))
+
+CC = gcc
+CFLAGS  = -std=gnu11 -O2 -Wall -pedantic
 USB = -lusb `pkg-config libusb-1.0 --cflags --libs`
-MODULES = loading_util.o m_accel.o m_driver.o find_mouse.o
-OBJ = -o marley_accel.o
-
-target: $(MODULES)
-	$(CC) $(CFLAGS) -DDEBUG=$(DEBUG) $(OBJ) src/marley_accel.c -lm $(MODULES) $(USB);
-
-run: target
-	su -c "./marley_accel.o $(CONFIG_FILE_PATH)"
+LDFLAGS =
 
 
-errmsg.o:
-	$(CC) $(CFLAGS) -o errmsg.o src/errmsg.c -c
+all: $(TARGET)
 
-loading_util.o:
-	$(CC) $(CFLAGS) -o loading_util.o src/loading_util.c -c
+$(TARGET) : buildrepo $(OBJS)
+	$(CC) $(OBJS) $(USB) $(LDFLAGS) -o $@ -lm
 
-m_driver.o:
-	$(CC) $(CFLAGS) -DDEBUG=$(DEBUG) -o m_driver.o src/m_driver.c -c
-
-m_accel.o:
-	$(CC) $(CFLAGS) -o m_accel.o src/m_accel.c -c
-
-find_mouse.o:
-	$(CC) $(CFLAGS) -o find_mouse.o src/find_mouse.c -c
+$(OBJDIR)/%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@ -lm
 
 clean:
-	rm *.o
+	$(RM) $(OBJS)
+	@rm -rf $(OBJDIR)
 
+distclean: clean
+	$(RM) $(APP)
+
+buildrepo:
+	@$(call make-repo)
+
+define make-repo
+   for dir in $(SRCDIRS); \
+   do \
+	mkdir -p $(OBJDIR)/$$dir; \
+   done
+endef
