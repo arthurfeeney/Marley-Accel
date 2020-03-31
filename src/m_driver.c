@@ -96,13 +96,13 @@ void map_to_uinput(int fd, unsigned char *buf, int buf_size,
   map_key_to_uinput(fd, buf);
   map_scroll_to_uinput(fd, buf, buf_size);
   map_move_to_uinput(fd, buf, buf_size, as);
+  emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
 
 void map_scroll_to_uinput(int fd, unsigned char *buf, int buf_size) {
   const int scroll_idx = buf_size - 1; // always at the last index.
   if (buf[scroll_idx] != 0) {
     emit_intr(fd, EV_REL, REL_WHEEL, (signed char)buf[scroll_idx]);
-    emit_intr(fd, EV_SYN, SYN_REPORT, 0);
   }
 }
 
@@ -132,7 +132,6 @@ void map_key_to_uinput(int fd, unsigned char *buf) {
   int pressed[5] = {0, 0, 0, 0, 0};
   assign_pressed(key_code_map[idx], pressed);
   press_keys(fd, pressed);
-  emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
 
 static void press_keys(int fd, int *pressed) {
@@ -160,5 +159,4 @@ void map_move_to_uinput(int fd, unsigned char *buf, int buf_size,
   // write accelerated change to uinput
   emit_intr(fd, EV_REL, REL_X, dx);
   emit_intr(fd, EV_REL, REL_Y, dy);
-  emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }

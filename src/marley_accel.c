@@ -47,17 +47,17 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Accel Config Settings:\n");
-  printf(" > overflow_lim=%d\n", as.overflow_lim);
-  printf(" > base=%.4f\n", as.base);
-  printf(" > offset=%.4f\n", as.offset);
-  printf(" > upper_bound=%.4f\n", as.upper_bound);
-  printf(" > accel_rate=%.4f\n", as.accel_rate);
-  printf(" > power=%.4f\n", as.power);
-  printf(" > game_sens=%.4f\n", as.game_sens);
-  printf(" > pre_scalar_x=%.4f\n", as.pre_scalar_x);
-  printf(" > pre_scalar_y=%.4f\n", as.pre_scalar_y);
-  printf(" > post_scalar_x=%.4f\n", as.post_scalar_x);
-  printf(" > post_scalar_y=%.4f\n", as.post_scalar_y);
+  printf("\t> overflow_lim=%d\n", as.overflow_lim);
+  printf("\t> base=%.4f\n", as.base);
+  printf("\t> offset=%.4f\n", as.offset);
+  printf("\t> upper_bound=%.4f\n", as.upper_bound);
+  printf("\t> accel_rate=%.4f\n", as.accel_rate);
+  printf("\t> power=%.4f\n", as.power);
+  printf("\t> game_sens=%.4f\n", as.game_sens);
+  printf("\t> pre_scalar_x=%.4f\n", as.pre_scalar_x);
+  printf("\t> pre_scalar_y=%.4f\n", as.pre_scalar_y);
+  printf("\t> post_scalar_x=%.4f\n", as.post_scalar_x);
+  printf("\t> post_scalar_y=%.4f\n", as.post_scalar_y);
 
   mouse_info_t mouse_info = find_mouse();
   if (!mouse_info.found) {
