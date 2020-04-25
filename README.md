@@ -7,11 +7,6 @@ across applications and games. It additionally allows you to save and use multip
 configurations and provides a minimal GUI that plots your current settings to assist
 coniguration. 
 
-#### Contributing
-
-This is a small project, so if you find an issue or want a feature added, feel 
-free to let me know or make a pull request!
-
 #### Requirements
 
 There are only a few simple requirements for the driver:
