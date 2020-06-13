@@ -46,4 +46,4 @@ a new dependency. To run the tests, simply run
 
 ~~~~
 make test
-~~~
+~~~~
