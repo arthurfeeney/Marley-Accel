@@ -1,4 +1,3 @@
-#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,10 +7,10 @@
 #include <linux/uinput.h>
 
 #include "errmsg.h"
-#include "find_mouse.h"   /* find_mouse */
-#include "loading_util.h" /* load device and uinput. mouse_dev_t */
-#include "m_accel.h"      /* accel_settings_t and accel functions */
-#include "m_driver.h"     /* accel_driver */
+#include "find_mouse.h"
+#include "loading_util.h"
+#include "m_accel.h"
+#include "m_driver.h"
 
 int main(int argc, char *argv[]) {
   int err;
@@ -47,17 +46,17 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Accel Config Settings:\n");
-  printf("\t> overflow_lim=%d\n", as.overflow_lim);
-  printf("\t> base=%.4f\n", as.base);
-  printf("\t> offset=%.4f\n", as.offset);
-  printf("\t> upper_bound=%.4f\n", as.upper_bound);
-  printf("\t> accel_rate=%.4f\n", as.accel_rate);
-  printf("\t> power=%.4f\n", as.power);
-  printf("\t> game_sens=%.4f\n", as.game_sens);
-  printf("\t> pre_scalar_x=%.4f\n", as.pre_scalar_x);
-  printf("\t> pre_scalar_y=%.4f\n", as.pre_scalar_y);
-  printf("\t> post_scalar_x=%.4f\n", as.post_scalar_x);
-  printf("\t> post_scalar_y=%.4f\n", as.post_scalar_y);
+  printf("  > overflow_lim=%d\n", as.overflow_lim);
+  printf("  > base=%.4f\n", as.base);
+  printf("  > offset=%.4f\n", as.offset);
+  printf("  > upper_bound=%.4f\n", as.upper_bound);
+  printf("  > accel_rate=%.4f\n", as.accel_rate);
+  printf("  > power=%.4f\n", as.power);
+  printf("  > game_sens=%.4f\n", as.game_sens);
+  printf("  > pre_scalar_x=%.4f\n", as.pre_scalar_x);
+  printf("  > pre_scalar_y=%.4f\n", as.pre_scalar_y);
+  printf("  > post_scalar_x=%.4f\n", as.post_scalar_x);
+  printf("  > post_scalar_y=%.4f\n", as.post_scalar_y);
 
   mouse_info_t mouse_info = find_mouse();
   if (!mouse_info.found) {
@@ -87,7 +86,6 @@ int main(int argc, char *argv[]) {
   printf("\nStop with Ctrl-c.\n");
 
   err = accel_driver(fd, &md, &as);
-
   if (err) {
     libusb_errmsg("Error during device execution", err);
     dev_close(&md);
@@ -95,6 +93,7 @@ int main(int argc, char *argv[]) {
   }
 
   dev_close(&md);
+
   if (fd)
     close_input_device(fd);
 

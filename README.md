@@ -37,3 +37,13 @@ python mod.py configs/ex.cfg
 Configuration files allow for single-line comments and whitespace. The variables can
 be specified in any order. Everything needs to be spelled correctly, in lowercase,
 and it needs to have the equal sign.
+
+#### Tests
+
+There is a small suite of unit tests for the acceleration functions.
+it implements a very minimal unit testing framework, rather than adding
+a new dependency. To run the tests, simply run
+
+~~~~
+make test
+~~~

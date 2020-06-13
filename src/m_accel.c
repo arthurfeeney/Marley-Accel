@@ -76,15 +76,24 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   as->carry_dy = accum_dy - trim_dy;
 }
 
+float clipped_vel(float dx, float dy, float offset) {
+  const float vel = sqrt(dx * dx + dy * dy);
+  return fmax(vel - offset, 0.0);
+}
+
+float clip_delta(float delta, signed char lim) {
+  if (lim > 0) {
+    return fmin(delta, lim);
+  }
+  return delta;
+}
+
 float quake_accel(const signed char dx, const signed char dy,
                   accel_settings_t *as) {
-  // apply limit to mouse speed
-  const float clip_dx = fmin(dx, as->overflow_lim);
-  const float clip_dy = fmin(dy, as->overflow_lim);
-  // find velocity of the mouse
-  const float vel = sqrt(clip_dx * clip_dx + clip_dy * clip_dy);
-  // clip change to lower bound of 0.
-  const float change = fmax(vel - as->offset, 0.0);
+  // apply limit to mouse deltas if set.
+  const float clip_dx = clip_delta(dx, as->overflow_lim);
+  const float clip_dy = clip_delta(dy, as->overflow_lim);
+  const float change = clipped_vel(clip_dx, clip_dy, as->offset);
   const float unbounded =
       as->base + pow((as->accel_rate * change), as->power - 1);
   // clip accel_sens to upper bound.
