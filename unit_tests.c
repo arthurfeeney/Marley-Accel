@@ -62,11 +62,11 @@ static char *test_quake_accel_no_change() {
   /*
    * With no movement, accel sens is the base sens.
    */
-  signed char dx = 0;
-  signed char dy = 0;
+  delta_t dx = 0;
+  delta_t dy = 0;
   float accel_value = quake_accel(dx, dy, &basic);
   char accel_value_str[30];
-  gcvt(accel_value, 20, accel_value_str);
+  gcvt(accel_value, 30, accel_value_str);
   create_msg(__func__, "accel_value != base", accel_value_str);
   mu_assert(dst, accel_value == basic.base);
   return 0;
@@ -77,8 +77,8 @@ static char *test_quake_accel_small_change() {
    * With a small change, mouse velocity won't be greater than offset,
    * so the accel sens is still the base sens.
    */
-  signed char dx = 1;
-  signed char dy = -1;
+  delta_t dx = 1;
+  delta_t dy = -1;
   float accel_value = quake_accel(dx, dy, &basic);
   char accel_value_str[30];
   gcvt(accel_value, 20, accel_value_str);
@@ -92,8 +92,8 @@ static char *test_quake_accel_large_change() {
    * With a large change, the accel sens will not be
    * the base sens.
    */
-  signed char dx = 100;
-  signed char dy = -127;
+  delta_t dx = 100;
+  delta_t dy = -127;
   float accel_value = quake_accel(dx, dy, &basic);
   char accel_value_str[30];
   gcvt(accel_value, 20, accel_value_str);
@@ -106,9 +106,9 @@ static char *test_accelerate_small_change() {
   /*
    * With small or no change, deltas should not be affected.
    */
-  for (signed char i = 0; i < 4; ++i) {
-    signed char dx = i;
-    signed char dy = 0;
+  for (delta_t i = 0; i < 4; ++i) {
+    delta_t dx = i;
+    delta_t dy = 0;
     accelerate(&dx, &dy, &basic);
     create_msg(__func__, "dx != i or dy != 0", "nonzero");
     mu_assert(dst, dx == i && dy == 0);
@@ -120,9 +120,9 @@ static char *test_accelerate_large_change() {
   /*
    * with a large change, deltas should be scaled larger.
    */
-  for (signed char i = 110; i < 125; ++i) {
-    signed char dx = i;
-    signed char dy = i - 3;
+  for (delta_t i = 110; i < 125; ++i) {
+    delta_t dx = i;
+    delta_t dy = i - 3;
     float accel_value = basic.accel(dx, dy, &basic);
     char accel_value_str[30];
     gcvt(accel_value, 20, accel_value_str);

@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     }
   } else {
     printf("You did not pass a configuration file\n");
-    return 0;
+    printf("Using default settings\n");
   }
 
   printf("Accel Config Settings:\n");

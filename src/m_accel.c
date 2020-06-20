@@ -41,7 +41,7 @@ float limit_delta(float delta) {
   return fmin(SCHAR_MAX, delta);
 }
 
-void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
+void accelerate(delta_t *dx, delta_t *dy, accel_settings_t *as) {
   /*
    * Apply mouse acceleration to dx and dy with user specified settings.
    * dx and dy are updated in-place.
@@ -65,9 +65,9 @@ void accelerate(signed char *dx, signed char *dy, accel_settings_t *as) {
   // Add carry from previous iteration
   const float accum_dx = limit_delta(post_dx + as->carry_dx);
   const float accum_dy = limit_delta(post_dy + as->carry_dy);
-  // truncate before conversion to signed value prevents small jiggles
-  const signed char trim_dx = (signed char)truncf(accum_dx);
-  const signed char trim_dy = (signed char)truncf(accum_dy);
+  // truncate before conversion to delta_t prevents small jiggles
+  const delta_t trim_dx = (delta_t)truncf(accum_dx);
+  const delta_t trim_dy = (delta_t)truncf(accum_dy);
   // Update deltas with their trimmed values
   *dx = trim_dx;
   *dy = trim_dy;
@@ -88,8 +88,7 @@ float clip_delta(float delta, signed char lim) {
   return delta;
 }
 
-float quake_accel(const signed char dx, const signed char dy,
-                  accel_settings_t *as) {
+float quake_accel(const float dx, const float dy, accel_settings_t *as) {
   // apply limit to mouse deltas if set.
   const float clip_dx = clip_delta(dx, as->overflow_lim);
   const float clip_dy = clip_delta(dy, as->overflow_lim);
@@ -101,4 +100,9 @@ float quake_accel(const signed char dx, const signed char dy,
   // account for in-game multiplier.
   const float accel_sens = bounded / as->game_sens;
   return accel_sens;
+}
+
+float pow_accel(const float dx, const float dy, accel_settings_t *as) {
+  const float change = clipped_vel(dx, dy, as->offset);
+  return pow((as->accel_rate * change), as->power - 1);
 }

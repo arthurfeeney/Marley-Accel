@@ -11,7 +11,8 @@ OBJS    := $(patsubst %.c,$(OBJDIR)/%.o,$(SRCS))
 # Test ojects. We only test the accel functions.
 TOBJS   := $(patsubst src/m_accel.c,$(OBJDIR)/src/m_accel.o,src/m_accel.c)
 
-CFLAGS  = -std=gnu11 -O2 -Wall -pedantic
+DEBUG   = 0
+CFLAGS  = -std=gnu11 -O2 -Wall -pedantic -DDEBUG
 USB     = -lusb `pkg-config libusb-1.0 --cflags --libs`
 
 

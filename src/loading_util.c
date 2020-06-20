@@ -15,6 +15,7 @@
 #include "errmsg.h"
 #include "loading_util.h"
 #include "m_accel.h"
+#include "name_map.h"
 
 #define CONFIG_LINE_LENGTH 1024
 
@@ -30,7 +31,7 @@ int load_config(accel_settings_t *as, const char *config_path) {
    * load accel settings from configuration file.
    */
   FILE *config = fopen(config_path, "r");
-  char line[CONFIG_LINE_LENGTH]; // over allocating memory is fine here
+  char line[CONFIG_LINE_LENGTH];
   while (fgets(line, sizeof(line), config) != NULL) {
     make_lowercase(line);
     remove_spaces(line);
@@ -39,6 +40,10 @@ int load_config(accel_settings_t *as, const char *config_path) {
     if (err) {
       return err;
     }
+  }
+  // default to quake accel if nothing specified.
+  if (!as->accel) {
+    as->accel = quake_accel;
   }
   fclose(config);
   return 0;
@@ -175,7 +180,12 @@ static int assign_settings(const char *line, accel_settings_t *as) {
     return -1;
   }
   *eq_ptr = '\0';
-  if (strcmp(line, "base") == 0) {
+
+  accel_func accel = name_map_lookup(eq_ptr + 1);
+
+  if (accel) {
+    as->accel = accel;
+  } else if (strcmp(line, "base") == 0) {
     as->base = strtof(eq_ptr + 1, NULL);
   } else if (strcmp(line, "offset") == 0) {
     as->offset = strtof(eq_ptr + 1, NULL);

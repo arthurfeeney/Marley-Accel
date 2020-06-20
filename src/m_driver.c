@@ -146,17 +146,19 @@ static void press_keys(int fd, int *pressed) {
   emit_intr(fd, EV_KEY, BTN_EXTRA, pressed[4]);
 }
 
+static int buf_to_delta(unsigned char low, unsigned char sign) {
+  return (delta_t)(sign == 0 ? low : (signed char)low);
+}
+
 void map_move_to_uinput(int fd, unsigned char *buf, int buf_size,
                         accel_settings_t *as) {
   // retrieve the changes in mouse position.
   // convert to signed char (overflowed values become proper d* in negative
   // direction.)
-  signed char dx = (signed char)buf[1];
-  signed char dy = (signed char)buf_size == 6 ? buf[3] : buf[2];
-
+  delta_t dx = buf_to_delta(buf[1], buf[2]);
+  delta_t dy = buf_to_delta(buf[3], buf[4]);
   // dx and dy are updated in-place.
   accelerate(&dx, &dy, as);
-  // write accelerated change to uinput
   emit_intr(fd, EV_REL, REL_X, dx);
   emit_intr(fd, EV_REL, REL_Y, dy);
 }
