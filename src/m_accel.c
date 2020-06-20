@@ -5,6 +5,10 @@
 
 #include "m_accel.h"
 
+static float clipped_vel(float, float, float);
+static float clip_delta(float, signed char);
+static float limit_delta(float);
+
 #if defined(PRECOMP) && PRECOMP + 0
 static float precomp_accel_sens[UCHAR_MAX][UCHAR_MAX];
 static float lookup(const int dx, const int dy) {
@@ -29,17 +33,6 @@ void precomp(accel_settings_t *as) {
   }
 }
 #endif
-
-float limit_delta(float delta) {
-  /*
-   * used to prevent overflow when converting to signed char.
-   */
-  const int sign = delta > 0 ? 1 : -1;
-  if (sign < 0) {
-    return fmax(SCHAR_MIN, delta);
-  }
-  return fmin(SCHAR_MAX, delta);
-}
 
 void accelerate(delta_t *dx, delta_t *dy, accel_settings_t *as) {
   /*
@@ -76,18 +69,6 @@ void accelerate(delta_t *dx, delta_t *dy, accel_settings_t *as) {
   as->carry_dy = accum_dy - trim_dy;
 }
 
-float clipped_vel(float dx, float dy, float offset) {
-  const float vel = sqrt(dx * dx + dy * dy);
-  return fmax(vel - offset, 0.0);
-}
-
-float clip_delta(float delta, signed char lim) {
-  if (lim > 0) {
-    return fmin(delta, lim);
-  }
-  return delta;
-}
-
 float quake_accel(const float dx, const float dy, accel_settings_t *as) {
   // apply limit to mouse deltas if set.
   const float clip_dx = clip_delta(dx, as->overflow_lim);
@@ -105,4 +86,27 @@ float quake_accel(const float dx, const float dy, accel_settings_t *as) {
 float pow_accel(const float dx, const float dy, accel_settings_t *as) {
   const float change = clipped_vel(dx, dy, as->offset);
   return pow((as->accel_rate * change), as->power - 1);
+}
+
+static float clipped_vel(float dx, float dy, float offset) {
+  const float vel = sqrt(dx * dx + dy * dy);
+  return fmax(vel - offset, 0.0);
+}
+
+static float clip_delta(float delta, signed char lim) {
+  if (lim > 0) {
+    return fmin(delta, lim);
+  }
+  return delta;
+}
+
+float limit_delta(float delta) {
+  /*
+   * used to prevent overflow when converting to signed char.
+   */
+  const int sign = delta > 0 ? 1 : -1;
+  if (sign < 0) {
+    return fmax(SCHAR_MIN, delta);
+  }
+  return fmin(SCHAR_MAX, delta);
 }

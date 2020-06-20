@@ -16,11 +16,6 @@ There are only a few simple requirements for the driver:
 * libusb-1.0
 * uinput (kernel module)
 
-#### Installation
-
-When you have a config you're happy with, install the driver!
-(This just puts a script into )
-
 #### Usage
 
 This is still a work in progress. The
