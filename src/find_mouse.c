@@ -10,13 +10,13 @@
 
 #define MOUSE_INTERFACE_PROTOCOL 2
 
-mouse_info_t find_mouse(void) {
-  /*
-   * Searches for a mouse and returns info on the first one that it finds.
-   * It goes through all devices in all busses until it finds a mouse.
-   * Documentation for device description pointers at
-   * https://www.kernel.org/doc/html/v4.17/driver-api/usb/usb.html
-   */
+/**
+ * Searches for a mouse and returns info on the first one that it finds.
+ * It goes through all devices in all busses until it finds a mouse.
+ * Documentation for device description pointers at
+ * https://www.kernel.org/doc/html/v4.17/driver-api/usb/usb.html
+ */
+mouse_info_t find_mouse() {
   usb_init(); // there does not seem to be a usb_exit
   usb_find_busses();
   usb_find_devices();

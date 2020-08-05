@@ -15,7 +15,7 @@
 #include "errmsg.h"
 #include "loading_util.h"
 #include "m_accel.h"
-#include "name_map.h"
+#include "marley_map.h"
 
 #define CONFIG_LINE_LENGTH 1024
 
@@ -26,10 +26,12 @@ static int assign_settings(const char *, accel_settings_t *);
 static void create_bindings(int);
 static int initialize_device(int, uint16_t, uint16_t);
 
+/**
+ * Load users accel settings from the specified configuration file.
+ * This will automatically perform some cleaning to the config file and remove
+ * comments
+ */
 int load_config(accel_settings_t *as, const char *config_path) {
-  /*
-   * load accel settings from configuration file.
-   */
   FILE *config = fopen(config_path, "r");
   char line[CONFIG_LINE_LENGTH];
   while (fgets(line, sizeof(line), config) != NULL) {
@@ -49,11 +51,11 @@ int load_config(accel_settings_t *as, const char *config_path) {
   return 0;
 }
 
+/**
+ * Device setup. This connects to usb mouse device using libusb. Detaches the
+ * kernel driver and claims the device.
+ */
 int dev_setup(mouse_dev_t *dev) {
-  /*
-   * Connects to usb mouse device using libusb. Detaches the kernel driver
-   * and claims the device.
-   */
   int err = libusb_init(&dev->usb_ctx);
   if (err) {
     return err;
@@ -67,7 +69,7 @@ int dev_setup(mouse_dev_t *dev) {
     printf("Marley-Accel: Device not found, try running with sudo.\n");
     return -1;
   }
-  // incase of error, driver may not be attached. So,
+  // after an error, on restart the driver may not be attached. So,
   // we make sure that it is attached.
   // If driver is already attached, this has no effect.
   libusb_attach_kernel_driver(dev->usb_handle, dev->interface);
@@ -94,10 +96,10 @@ int dev_setup(mouse_dev_t *dev) {
   return 0;
 }
 
+/**
+ * undoes dev_setup. Releases the device and reattaches the kernel driver.
+ */
 void dev_close(mouse_dev_t *dev) {
-  /*
-   * undoes dev_setup. Releases the device and reattaches the kernel driver.
-   */
   if (dev->usb_handle) {
     if (dev->usb_claimed)
       libusb_release_interface(dev->usb_handle, dev->interface);
@@ -110,10 +112,11 @@ void dev_close(mouse_dev_t *dev) {
   printf("\nMarley-Accel: Device closed\n");
 }
 
+/**
+ * Creates uinput driver for the mouse with vendor_id and product_id.
+ * These values are part of the mouse settings.
+ */
 int create_input_device(uint16_t vendor_id, uint16_t product_id) {
-  /*
-   * creates uinput driver for the mouse with vendor_id and product_id.
-   */
   int err;
   const int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
   if (fd < 0) {
@@ -145,11 +148,11 @@ static void make_lowercase(char *line) {
   }
 }
 
+/**
+ * Remove all spaces from the line string. The config files are small. This can
+ * be done efficiently enough by shifting text to cover spaces in-place.
+ */
 static void remove_spaces(char *line) {
-  /*
-   * Remove all spaces from the line. config files are small enough that this
-   * can be done in-place by shifting text to cover spaces.
-   */
   for (int idx = 0; idx < CONFIG_LINE_LENGTH && line[idx] != '\0'; ++idx) {
     // shift text over to remove space.
     if (isspace(line[idx])) {
@@ -161,17 +164,25 @@ static void remove_spaces(char *line) {
   }
 }
 
+/**
+ * Remove comments from a line in a config file
+ * This is done by Replace '#' with end of string.
+ */
 static void remove_comments(char *line) {
-  /*
-   * Remove comments from a line in a config file
-   * Replace '#' with end of string.
-   * Effectively ignoring everything after it, allowing for single line comments
-   */
   for (int idx = 0; idx < CONFIG_LINE_LENGTH; ++idx) {
     if (line[idx] == '#') {
       line[idx] = '\0';
     }
   }
+}
+
+marley_map *name_to_func_map() {
+  marley_map *map = marley_map_alloc(4);
+  marley_map_set(map, "quake", (void *)quake_accel);
+  marley_map_set(map, "quake_accel", (void *)quake_accel);
+  marley_map_set(map, "pow", (void *)pow_accel);
+  marley_map_set(map, "pow_accel", (void *)pow_accel);
+  return map;
 }
 
 static int assign_settings(const char *line, accel_settings_t *as) {
@@ -181,7 +192,9 @@ static int assign_settings(const char *line, accel_settings_t *as) {
   }
   *eq_ptr = '\0';
 
-  accel_func accel = name_map_lookup(eq_ptr + 1);
+  marley_map *map = name_to_func_map();
+  accel_func accel = (accel_func)marley_map_lookup(map, eq_ptr + 1);
+  marley_map_free(map);
 
   if (accel) {
     as->accel = accel;

@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "src/m_accel.h"
+#include "src/marley_map.h"
 
 /* Framework implementation */
 
@@ -136,12 +137,56 @@ static char *test_accelerate_large_change() {
   return 0;
 }
 
+static char *test_marley_map_alloc() {
+  const int map_size = 10;
+  marley_map *map = marley_map_alloc(map_size);
+  mu_assert("map size does not match alloced", map->reserved_size == map_size);
+  mu_assert("map not initialized empty", map->size == 0);
+  return 0;
+}
+
+static char *test_marley_map_set_string() {
+  const int map_size = 10;
+  marley_map *map = marley_map_alloc(map_size);
+  marley_map_set(map, "key", "value");
+  mu_assert("map size not incremented to 1", map->size == 1);
+  marley_map_set(map, "key2", "value");
+  mu_assert("map size not incremented to 2", map->size == 2);
+  marley_map_set(map, "key2", "new value");
+  mu_assert("map size not incremented to 2", map->size == 2);
+  return 0;
+}
+
+static char *test_marley_map_lookup() {
+  const int map_size = 10;
+  marley_map *map = marley_map_alloc(map_size);
+  marley_map_set(map, "key", "value");
+  marley_map_set(map, "key2", "value2");
+  void *value = marley_map_lookup(map, "key");
+  char *value_str = (char *)value;
+  mu_assert("value not properley retrieved", strcmp(value_str, "value") == 0);
+  void *value2 = marley_map_lookup(map, "key2");
+  char *value2_str = (char *)value2;
+  mu_assert("value2 not properley retrieved",
+            strcmp(value2_str, "value2") == 0);
+  marley_map_set(map, "key2", "different");
+  void *value2_diff = marley_map_lookup(map, "key2");
+  char *value2_diff_str = (char *)value2_diff;
+  mu_assert("value2_diff not properley retrieved",
+            strcmp(value2_diff_str, "different") == 0);
+
+  return 0;
+}
+
 static char *all_tests() {
-  mu_run_test(test_quake_accel_no_change);
-  mu_run_test(test_quake_accel_small_change);
-  mu_run_test(test_quake_accel_large_change);
-  mu_run_test(test_accelerate_small_change);
-  mu_run_test(test_accelerate_large_change);
+  mu_run_test(test_quake_accel_no_change);    // 1
+  mu_run_test(test_quake_accel_small_change); // 2
+  mu_run_test(test_quake_accel_large_change); // 3
+  mu_run_test(test_accelerate_small_change);  // 4
+  mu_run_test(test_accelerate_large_change);  // 5
+  mu_run_test(test_marley_map_alloc);         // 6
+  mu_run_test(test_marley_map_set_string);    // 7
+  mu_run_test(test_marley_map_lookup);        // 8
   return 0;
 }
 

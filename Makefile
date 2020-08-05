@@ -1,4 +1,5 @@
 
+CC      = clang
 TARGET	= marley_accel
 TEST    = test_marley_accel
 
@@ -9,7 +10,6 @@ SRCS    := $(shell find $(SRCDIR) -name '*.c')
 SRCDIRS := $(shell find . -name '*.c' -exec dirname {} \; | uniq)
 OBJS    := $(patsubst %.c,$(OBJDIR)/%.o,$(SRCS))
 # Test ojects. We only test the accel functions.
-TOBJS   := $(patsubst src/m_accel.c,$(OBJDIR)/src/m_accel.o,src/m_accel.c)
 
 DEBUG   = 0
 CFLAGS  = -std=gnu11 -O2 -Wall -pedantic -DDEBUG
@@ -24,14 +24,14 @@ run: all
 	su -c "./marley_accel $(CONFIG_FILE_PATH)"
 
 $(TEST): buildrepo $(OBJS)
-	cc $(TOBJS) $(CFLAGS) $(USB) unit_tests.c -o $@ -lm;
+	$(CC) obj/src/m_accel.o obj/src/marley_map.o $(CFLAGS) $(USB) unit_tests.c -o $@ -lm;
 	./test_marley_accel
 
 $(TARGET) : buildrepo $(OBJS)
-	cc $(OBJS) $(USB) -o $@ -lm
+	$(CC) $(OBJS) $(USB) -o $@ -lm
 
 $(OBJDIR)/%.o: %.c
-	cc $(CFLAGS) -c $< -o $@ -lm
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	$(RM) $(TARGET)

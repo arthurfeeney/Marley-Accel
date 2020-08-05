@@ -18,11 +18,11 @@ static float lookup(const int dx, const int dy) {
   return precomp_accel_sens[dx_idx][dy_idx];
 }
 
+/**
+ * Precompute accel sens for all possible combinations of dx and dy.
+ * There are only 256^2 possible combinations, so this is feasible.
+ */
 void precomp(accel_settings_t *as) {
-  /*
-   * Precompute accel sens for all possible combinations of dx and dy.
-   * There are only 256^2 possible combinations, so this is feasible.
-   */
   printf("Performing precomp");
   for (int dx = SCHAR_MIN; dx < SCHAR_MAX; ++dx) {
     for (int dy = SCHAR_MIN; dy < SCHAR_MAX; ++dy) {
@@ -34,14 +34,14 @@ void precomp(accel_settings_t *as) {
 }
 #endif
 
+/**
+ * Apply mouse acceleration to dx and dy with user specified settings.
+ * Because values get trimmed when converted to char, we use carry_d* so
+ * values cut off can be added to the next call. This allows for greater
+ * precision
+ * dx and dy are updated in-place.
+ */
 void accelerate(delta_t *dx, delta_t *dy, accel_settings_t *as) {
-  /*
-   * Apply mouse acceleration to dx and dy with user specified settings.
-   * dx and dy are updated in-place.
-   * Because values get trimmed when converted to char, we use carry_d* so
-   * values cut off can be added to the next call. This allows for greater
-   * precision overall.
-   */
   const float pre_dx = *dx * as->pre_scalar_x;
   const float pre_dy = *dx * as->pre_scalar_y;
   // apply acceleration
@@ -69,6 +69,11 @@ void accelerate(delta_t *dx, delta_t *dy, accel_settings_t *as) {
   as->carry_dy = accum_dy - trim_dy;
 }
 
+/**
+ * Implements quake-like accel.
+ * The equation takes this form:
+ *   - sens = (B + (A * (v - o)) ^ (p - 1)) / g
+ */
 float quake_accel(const float dx, const float dy, accel_settings_t *as) {
   // apply limit to mouse deltas if set.
   const float clip_dx = clip_delta(dx, as->overflow_lim);
@@ -88,11 +93,18 @@ float pow_accel(const float dx, const float dy, accel_settings_t *as) {
   return pow((as->accel_rate * change), as->power - 1);
 }
 
+/**
+ * compute velocity given deltas. Apply an offset.
+ */
 static float clipped_vel(float dx, float dy, float offset) {
   const float vel = sqrt(dx * dx + dy * dy);
   return fmax(vel - offset, 0.0);
 }
 
+/**
+ * apply a limit to delta by clipping it.
+ * This is disabled when lim is 0.
+ */
 static float clip_delta(float delta, signed char lim) {
   if (lim > 0) {
     return fmin(delta, lim);
@@ -100,10 +112,10 @@ static float clip_delta(float delta, signed char lim) {
   return delta;
 }
 
+/**
+ * used to prevent overflow when converting to signed char.
+ */
 float limit_delta(float delta) {
-  /*
-   * used to prevent overflow when converting to signed char.
-   */
   const int sign = delta > 0 ? 1 : -1;
   if (sign < 0) {
     return fmax(SCHAR_MIN, delta);

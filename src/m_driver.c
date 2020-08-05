@@ -16,7 +16,7 @@
 #include "m_accel.h"
 #include "m_driver.h"
 
-/*
+/**
  * Boolean flag to run the mouse driver. When it is switched to false, the
  * driver will stop. The original kernel mouse driver should reattach.
  */
@@ -37,19 +37,17 @@ static void intrmsg(const unsigned char *buf, int len) {
 }
 #endif
 
-void interrupt_handler(int sig) {
-  /*
-   * On interrupt, turn off the mouse driver.
-   */
-  run_mouse_driver = false;
-}
+/**
+ * On interrupt (CTRL-c), elegantly turn off the mouse driver.
+ */
+void interrupt_handler(int sig) { run_mouse_driver = false; }
 
+/**
+ * The actual acceleration driver.
+ * gets mouse interrupt packets, applies acceleration functions to the relative
+ * change in mouse position, and writes it to uinput.
+ */
 int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
-  /*
-   * The actual acceleration driver.
-   * Gets interrupt, applies acceleration functions to the relative change
-   * in mouse position, and writes to uinput.
-   */
   int err;
 
 #if defined(PRECOMP) && PRECOMP + 0
@@ -79,10 +77,10 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
   return 0;
 }
 
+/*
+ * emit (write) interrupt to uinput at fd
+ */
 void emit_intr(int fd, int type, int code, int val) {
-  /*
-   * emit (write) interrupt to uinput at fd
-   */
   struct input_event ie = {.type = type,
                            .code = code,
                            .value = val,
@@ -122,23 +120,24 @@ static void assign_pressed(const int *const key_codes, int *pressed) {
   }
 }
 
+/**
+ * Given mask of currently pressed keys, write the info to uinput
+ *
+ * pressed[i] = 1 means that key i is pressed. If zero, it is released.
+ * This can easily handle keycodes when multiple keys are pressed.
+ */
 void map_key_to_uinput(int fd, unsigned char *buf) {
-  /*
-   * value = 1 is a press, 0 is a release
-   * Some keycodes are for when multiple keys are held down.
-   * These can be seen by printing with intrmsg.
-   */
   const int idx = buf[0];
   int pressed[5] = {0, 0, 0, 0, 0};
   assign_pressed(key_code_map[idx], pressed);
   press_keys(fd, pressed);
 }
 
+/**
+ * Given mask of pressed keys, Emits interrupt for all mouse keys. Releases any
+ * keys that are not held down.
+ */
 static void press_keys(int fd, int *pressed) {
-  /*
-   * emits interrupt for all mouse keys. Releases any keys
-   * that are not held down.
-   */
   emit_intr(fd, EV_KEY, BTN_LEFT, pressed[0]);
   emit_intr(fd, EV_KEY, BTN_RIGHT, pressed[1]);
   emit_intr(fd, EV_KEY, BTN_MIDDLE, pressed[2]);

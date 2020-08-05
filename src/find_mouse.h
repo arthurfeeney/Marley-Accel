@@ -10,6 +10,6 @@ typedef struct mouse_info {
   uint16_t buf_size;
 } mouse_info_t;
 
-mouse_info_t find_mouse(void);
+mouse_info_t find_mouse();
 
 #endif
