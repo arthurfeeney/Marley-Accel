@@ -13,8 +13,8 @@
 
 #include "key_codes.h"
 #include "loading_util.h"
-#include "m_accel.h"
-#include "m_driver.h"
+#include "mouse_accel.h"
+#include "mouse_driver.h"
 
 /**
  * Boolean flag to run the mouse driver. When it is switched to false, the

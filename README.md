@@ -1,5 +1,5 @@
 
-## Marley Accel
+# Marley Accel
 
 A small Linux user space mouse accel driver that supports the quake live accel
 settings. It allows for acceleration that is frame rate independent and consistent
@@ -7,7 +7,7 @@ across applications and games. It additionally allows you to save and use multip
 configurations and provides a minimal GUI that plots your current settings to assist
 coniguration.
 
-#### Requirements
+## Requirements
 
 There are only a few simple requirements for the driver:
 
@@ -16,7 +16,7 @@ There are only a few simple requirements for the driver:
 * libusb-1.0
 * uinput (kernel module)
 
-#### Usage
+## Usage
 
 This is still a work in progress. The
 config file should adhere to the form of the provided example,
@@ -38,12 +38,13 @@ be specified in any order. Everything needs to be spelled correctly, in lowercas
 and it needs to have the equal sign.
 
 
-#### Tests
+## Tests
 
 There is a small suite of unit tests for the acceleration functions.
 it implements a very minimal unit testing framework, rather than adding
 a new dependency. To run the tests, simply run
 
 ~~~~
+export ASAN_SYMBOLIZER=/usr/bin/llvm-symbolizer  # if available, for address sanitizer
 make test
 ~~~~

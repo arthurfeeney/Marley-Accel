@@ -3,15 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "m_accel.h"
+#include "mouse_accel.h"
 
-static float clipped_vel(float, float, float);
-static float clip_delta(float, signed char);
-static float limit_delta(float);
+static inline scalar_t clipped_vel(scalar_t, scalar_t, scalar_t)
+    __attribute__((const));
+static inline scalar_t clip_delta(scalar_t, signed char) __attribute__((const));
+static inline scalar_t limit_delta(scalar_t) __attribute((const));
 
 #if defined(PRECOMP) && PRECOMP + 0
-static float precomp_accel_sens[UCHAR_MAX][UCHAR_MAX];
-static float lookup(const int dx, const int dy) {
+static scalar_t precomp_accel_sens[UCHAR_MAX][UCHAR_MAX];
+static scalar_t lookup(const int dx, const int dy) {
   // shift dx and dy over by SCHAR_MIN.
   const int dx_idx = dx + -SCHAR_MIN;
   const int dy_idx = dy + -SCHAR_MIN;
@@ -42,22 +43,22 @@ void precomp(accel_settings_t *as) {
  * dx and dy are updated in-place.
  */
 void accelerate(delta_t *dx, delta_t *dy, accel_settings_t *as) {
-  const float pre_dx = *dx * as->pre_scalar_x;
-  const float pre_dy = *dx * as->pre_scalar_y;
+  const scalar_t pre_dx = *dx * as->pre_scalar_x;
+  const scalar_t pre_dy = *dx * as->pre_scalar_y;
   // apply acceleration
 #if defined(PRECOMP) && PRECOMP + 0
-  const float accelerated_sens = lookup(pre_dx, pre_dy);
+  const scalar_t accelerated_sens = lookup(pre_dx, pre_dy);
 #else
-  const float accelerated_sens = as->accel(pre_dx, pre_dy, as);
+  const scalar_t accelerated_sens = as->accel(pre_dx, pre_dy, as);
 #endif
-  const float fdx = *dx * accelerated_sens;
-  const float fdy = *dy * accelerated_sens;
+  const scalar_t fdx = *dx * accelerated_sens;
+  const scalar_t fdy = *dy * accelerated_sens;
   // Apply post scalars.
-  const float post_dx = fdx * as->post_scalar_x;
-  const float post_dy = fdy * as->post_scalar_y;
+  const scalar_t post_dx = fdx * as->post_scalar_x;
+  const scalar_t post_dy = fdy * as->post_scalar_y;
   // Add carry from previous iteration
-  const float accum_dx = limit_delta(post_dx + as->carry_dx);
-  const float accum_dy = limit_delta(post_dy + as->carry_dy);
+  const scalar_t accum_dx = limit_delta(post_dx + as->carry_dx);
+  const scalar_t accum_dy = limit_delta(post_dy + as->carry_dy);
   // truncate before conversion to delta_t prevents small jiggles
   const delta_t trim_dx = (delta_t)truncf(accum_dx);
   const delta_t trim_dy = (delta_t)truncf(accum_dy);
@@ -70,42 +71,42 @@ void accelerate(delta_t *dx, delta_t *dy, accel_settings_t *as) {
 }
 
 /**
- * Implements quake-like accel.
- * The equation takes this form:
- *   - sens = (B + (A * (v - o)) ^ (p - 1)) / g
+ * Implements quake-like accel. The equation takes this form:
+ *   - accelerated_sens = (B + (A * (v - o)) ^ (p - 1)) / g
  */
-float quake_accel(const float dx, const float dy, accel_settings_t *as) {
+scalar_t quake_accel(const scalar_t dx, const scalar_t dy,
+                     accel_settings_t *as) {
   // apply limit to mouse deltas if set.
-  const float clip_dx = clip_delta(dx, as->overflow_lim);
-  const float clip_dy = clip_delta(dy, as->overflow_lim);
-  const float change = clipped_vel(clip_dx, clip_dy, as->offset);
-  const float unbounded =
+  const scalar_t clip_dx = clip_delta(dx, as->overflow_lim);
+  const scalar_t clip_dy = clip_delta(dy, as->overflow_lim);
+  const scalar_t change = clipped_vel(clip_dx, clip_dy, as->offset);
+  const scalar_t unbounded =
       as->base + pow((as->accel_rate * change), as->power - 1);
   // clip accel_sens to upper bound.
-  const float bounded = fmin(unbounded, as->upper_bound);
+  const scalar_t bounded = fmin(unbounded, as->upper_bound);
   // account for in-game multiplier.
-  const float accel_sens = bounded / as->game_sens;
+  const scalar_t accel_sens = bounded / as->game_sens;
   return accel_sens;
 }
 
-float pow_accel(const float dx, const float dy, accel_settings_t *as) {
-  const float change = clipped_vel(dx, dy, as->offset);
+scalar_t pow_accel(const scalar_t dx, const scalar_t dy, accel_settings_t *as) {
+  const scalar_t change = clipped_vel(dx, dy, as->offset);
   return pow((as->accel_rate * change), as->power - 1);
 }
 
 /**
- * compute velocity given deltas. Apply an offset.
+ * compute offset, clipped velocity given deltas.
  */
-static float clipped_vel(float dx, float dy, float offset) {
-  const float vel = sqrt(dx * dx + dy * dy);
+static inline scalar_t clipped_vel(scalar_t dx, scalar_t dy, scalar_t offset) {
+  const scalar_t vel = sqrt(dx * dx + dy * dy);
   return fmax(vel - offset, 0.0);
 }
 
 /**
  * apply a limit to delta by clipping it.
- * This is disabled when lim is 0.
+ * If lim is 0, delta is unchanged
  */
-static float clip_delta(float delta, signed char lim) {
+static inline scalar_t clip_delta(scalar_t delta, signed char lim) {
   if (lim > 0) {
     return fmin(delta, lim);
   }
@@ -114,10 +115,11 @@ static float clip_delta(float delta, signed char lim) {
 
 /**
  * used to prevent overflow when converting to signed char.
+ * If delta is negative, this clips delta to the min value.
+ * Otherwise, it is clipped to the max value.
  */
-float limit_delta(float delta) {
-  const int sign = delta > 0 ? 1 : -1;
-  if (sign < 0) {
+static inline scalar_t limit_delta(scalar_t delta) {
+  if (delta < 0) {
     return fmax(SCHAR_MIN, delta);
   }
   return fmin(SCHAR_MAX, delta);

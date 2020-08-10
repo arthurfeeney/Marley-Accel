@@ -5,6 +5,17 @@
 #ifndef MARLEY_MAP_H
 #define MARLEY_MAP_H
 
+#include <stdbool.h>
+
+/**
+ * Return messages for marley_map
+ */
+enum {
+  MARLEY_MAP_ERROR = 1,
+  MARLEY_MAP_RESIZE_FAILED,
+  MARLEY_MAP_RESERVED_SIZE_NOT_POSITIVE
+};
+
 typedef struct {
   char *key;
   void *value;
@@ -21,8 +32,9 @@ typedef struct {
 
 marley_map *marley_map_alloc(int size);
 void marley_map_free(marley_map *map);
+int marley_map_resize(marley_map *map, int new_reserved_size);
 
-void marley_map_set(marley_map *map, char *key, void *data);
+int marley_map_set(marley_map *map, char *key, void *data);
 void *marley_map_lookup(marley_map *map, char *key);
 
 #endif

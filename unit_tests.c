@@ -5,12 +5,13 @@
  * simplicty and to avoid any requirements for running unit tests.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "src/m_accel.h"
 #include "src/marley_map.h"
+#include "src/mouse_accel.h"
 
 /* Framework implementation */
 
@@ -142,6 +143,7 @@ static char *test_marley_map_alloc() {
   marley_map *map = marley_map_alloc(map_size);
   mu_assert("map size does not match alloced", map->reserved_size == map_size);
   mu_assert("map not initialized empty", map->size == 0);
+  marley_map_free(map);
   return 0;
 }
 
@@ -154,6 +156,7 @@ static char *test_marley_map_set_string() {
   mu_assert("map size not incremented to 2", map->size == 2);
   marley_map_set(map, "key2", "new value");
   mu_assert("map size not incremented to 2", map->size == 2);
+  marley_map_free(map);
   return 0;
 }
 
@@ -174,7 +177,60 @@ static char *test_marley_map_lookup() {
   char *value2_diff_str = (char *)value2_diff;
   mu_assert("value2_diff not properley retrieved",
             strcmp(value2_diff_str, "different") == 0);
+  marley_map_free(map);
+  return 0;
+}
 
+static char *test_marley_map_resize() {
+  const int map_size = 1;
+  marley_map *map = marley_map_alloc(map_size);
+
+  mu_assert("map size non-zero", map->size == 0);
+  int err = marley_map_resize(map, 3);
+  mu_assert("map size non-zero 2", map->size == 0);
+
+  int length = snprintf(NULL, 0, "%d", err);
+  char *err_str = malloc(sizeof(char) * (length + 1));
+  snprintf(err_str, length + 1, "%d", err);
+  create_msg(__func__, "err != 0", err_str);
+  free(err_str);
+
+  mu_assert(dst, err == 0);
+  mu_assert("map reserved size incorrect", map->reserved_size == 3);
+
+  marley_map_set(map, "key", "value");
+  marley_map_set(map, "key2", "value2");
+  void *value = marley_map_lookup(map, "key");
+  char *value_str = (char *)value;
+  create_msg(__func__, "value_str != \"value\"", value_str);
+  mu_assert(dst, strcmp(value_str, "value") == 0);
+
+  void *value2 = marley_map_lookup(map, "key2");
+  char *value2_str = (char *)value2;
+  create_msg(__func__, "value2_str != \"value2\"", value2_str);
+  mu_assert(dst, strcmp(value2_str, "value2") == 0);
+
+  marley_map_free(map);
+  return 0;
+}
+
+static char *test_marley_map_set_resize() {
+  const int map_size = 1;
+  marley_map *map = marley_map_alloc(map_size);
+  marley_map_set(map, "key", "value");
+  marley_map_set(map, "key2", "value2");
+  mu_assert("map not resized", map->reserved_size == 2);
+  void *value = marley_map_lookup(map, "key");
+  char *value_str = (char *)value;
+  mu_assert("value not properly retrieved", strcmp(value_str, "value") == 0);
+
+  marley_map_set(map, "key3", "value3");
+  mu_assert("map not resized", map->reserved_size == 4);
+  void *value3 = marley_map_lookup(map, "key3");
+  char *value3_str = (char *)value3;
+  mu_assert("value not properly retrieved", strcmp(value3_str, "value3") == 0);
+
+  marley_map_free(map);
   return 0;
 }
 
@@ -187,6 +243,8 @@ static char *all_tests() {
   mu_run_test(test_marley_map_alloc);         // 6
   mu_run_test(test_marley_map_set_string);    // 7
   mu_run_test(test_marley_map_lookup);        // 8
+  mu_run_test(test_marley_map_resize);        // 9
+  mu_run_test(test_marley_map_set_resize);    // 10
   return 0;
 }
 

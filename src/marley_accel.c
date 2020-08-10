@@ -9,8 +9,8 @@
 #include "errmsg.h"
 #include "find_mouse.h"
 #include "loading_util.h"
-#include "m_accel.h"
-#include "m_driver.h"
+#include "mouse_accel.h"
+#include "mouse_driver.h"
 
 int main(int argc, char *argv[]) {
   int err;

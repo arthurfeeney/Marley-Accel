@@ -14,8 +14,8 @@
 
 #include "errmsg.h"
 #include "loading_util.h"
-#include "m_accel.h"
 #include "marley_map.h"
+#include "mouse_accel.h"
 
 #define CONFIG_LINE_LENGTH 1024
 
