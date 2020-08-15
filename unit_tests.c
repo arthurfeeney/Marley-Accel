@@ -30,7 +30,7 @@
 extern int tests_run;
 
 #define MAX_MSG_LEN 512
-char dst[MAX_MSG_LEN];
+static char dst[MAX_MSG_LEN];
 
 void create_msg(const char *func_name, const char *msg, const char *value) {
   dst[0] = '\0';
@@ -248,7 +248,7 @@ static char *all_tests() {
   return 0;
 }
 
-int main(int argc, char **argv) {
+int main(void) {
   printf("Starting Marley Accel tests\n");
   char *result = all_tests();
   if (result == 0) {

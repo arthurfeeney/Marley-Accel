@@ -18,13 +18,13 @@ typedef struct mouse_dev {
 
 int load_config(accel_settings_t *, const char *);
 
-/*
+/**
  * functions to manage the device with libusb
  */
 int dev_setup(mouse_dev_t *dev);
 void dev_close(mouse_dev_t *dev);
 
-/*
+/**
  * Fucuntions to handle uinput for the device.
  */
 int create_input_device(uint16_t, uint16_t);

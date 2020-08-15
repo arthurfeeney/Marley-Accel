@@ -195,6 +195,9 @@ static int assign_settings(const char *line, accel_settings_t *as) {
   marley_map *map = name_to_func_map();
   accel_func accel = (accel_func)marley_map_lookup(map, eq_ptr + 1);
   marley_map_free(map);
+  if (!accel) {
+    return -1;
+  }
 
   if (accel) {
     as->accel = accel;

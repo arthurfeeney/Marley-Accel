@@ -40,7 +40,10 @@ static void intrmsg(const unsigned char *buf, int len) {
 /**
  * On interrupt (CTRL-c), elegantly turn off the mouse driver.
  */
-void interrupt_handler(int sig) { run_mouse_driver = false; }
+void interrupt_handler(int sig) {
+  printf("Interrupt: %d", sig);
+  run_mouse_driver = false;
+}
 
 /**
  * The actual acceleration driver.
@@ -80,7 +83,7 @@ int accel_driver(int fd, mouse_dev_t *dev, accel_settings_t *as) {
 /*
  * emit (write) interrupt to uinput at fd
  */
-void emit_intr(int fd, int type, int code, int val) {
+void emit_intr(int fd, unsigned short type, unsigned short code, int val) {
   struct input_event ie = {.type = type,
                            .code = code,
                            .value = val,
@@ -93,7 +96,7 @@ void map_to_uinput(int fd, unsigned char *buf, int buf_size,
                    accel_settings_t *as) {
   map_key_to_uinput(fd, buf);
   map_scroll_to_uinput(fd, buf, buf_size);
-  map_move_to_uinput(fd, buf, buf_size, as);
+  map_move_to_uinput(fd, buf, as);
   emit_intr(fd, EV_SYN, SYN_REPORT, 0);
 }
 
@@ -149,8 +152,7 @@ static int buf_to_delta(unsigned char low, unsigned char sign) {
   return (delta_t)(sign == 0 ? low : (signed char)low);
 }
 
-void map_move_to_uinput(int fd, unsigned char *buf, int buf_size,
-                        accel_settings_t *as) {
+void map_move_to_uinput(int fd, unsigned char *buf, accel_settings_t *as) {
   // retrieve the changes in mouse position.
   // convert to signed char (overflowed values become proper d* in negative
   // direction.)

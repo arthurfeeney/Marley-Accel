@@ -1,9 +1,9 @@
-#ifndef M_ACCEL_H
-#define M_ACCEL_H
+#ifndef MOUSE_ACCEL_H
+#define MOUSE_ACCEL_H
 
 #define SCALAR double
 
-typedef int delta_t;
+typedef int32_t delta_t;
 typedef SCALAR scalar_t;
 
 typedef struct accel_settings {

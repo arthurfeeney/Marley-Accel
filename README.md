@@ -14,7 +14,7 @@ There are only a few simple requirements for the driver:
 * A modern C compiler
 * pkg-config
 * libusb-1.0
-* uinput (kernel module)
+* uinput (kernel module, requires use of su)
 
 ## Usage
 
@@ -40,7 +40,7 @@ and it needs to have the equal sign.
 
 ## Tests
 
-There is a small suite of unit tests for the acceleration functions.
+There is a small suite of unit tests for the acceleration functions and map.
 it implements a very minimal unit testing framework, rather than adding
 a new dependency. To run the tests, simply run
 

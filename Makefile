@@ -9,11 +9,11 @@ OBJDIR  = obj
 SRCS    := $(shell find $(SRCDIR) -name '*.c')
 SRCDIRS := $(shell find . -name '*.c' -exec dirname {} \; | uniq)
 OBJS    := $(patsubst %.c,$(OBJDIR)/%.o,$(SRCS))
-# Test ojects. We only test the accel functions.
 
 DEBUG      = 0
-CFLAGS     = -std=gnu11 -O2 -Wall -pedantic -DDEBUG -ffast-math
-TESTFLAGS  = -fsanitize=address,undefined -fno-omit-frame-pointer -g
+SAN 	   = -fsanitize=address,undefined
+CFLAGS     = -std=gnu11 -O2 -Wall -Wextra -pedantic -DDEBUG -ffast-math -pipe
+TESTFLAGS  = $(SAN) -fno-omit-frame-pointer -g
 USB        = -lusb `pkg-config libusb-1.0 --cflags --libs`
 
 
@@ -25,11 +25,11 @@ run: all
 	su -c "./marley_accel $(CONFIG_FILE_PATH)"
 
 $(TEST): buildrepo $(OBJS)
-	$(CC) obj/src/m_accel.o obj/src/marley_map.o $(CFLAGS) $(TESTFLAGS) $(USB) unit_tests.c -o $@ -lm;
+	$(CC) obj/src/mouse_accel.o obj/src/marley_map.o $(CFLAGS) $(TESTFLAGS) $(USB) unit_tests.c -o $@ -lm;
 	./test_marley_accel
 
 $(TARGET) : buildrepo $(OBJS)
-	$(CC) $(OBJS) $(USB) -o $@ -lm
+	$(CC) $(OBJS) -fsanitize=address,undefined $(USB) -o $@ -lm
 
 $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
